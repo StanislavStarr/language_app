@@ -4,6 +4,7 @@ Mobile app for learning English vocabulary from real books: read your own EPUB/F
 get its meaning in context, save it, study it, ask questions about the book (RAG).
 
 - Product: `docs/PRODUCT.md` · Architecture: `docs/ARCHITECTURE.md` · Decisions: `docs/DECISIONS.md`
+- Dev commands (Docker, DB, backend, mobile): `docs/DEVELOPMENT.md`
 - Plan and tasks: `docs/plan/README.md` → `docs/plan/phase-*.md`
 - Backend rules: `backend/CLAUDE.md` · Mobile rules: `mobile/CLAUDE.md`
 

@@ -1,0 +1,59 @@
+# Разработка: команды и окружение
+
+Основные команды запускаются из корня репозитория через `make`. Список целей — `Makefile`.
+
+## Первый запуск
+
+1. Docker Desktop запущен.
+2. `cp backend/.env.example backend/.env` и заполнить значения (`OPENAI_API_KEY` и др. — вручную).
+3. `make up` — Postgres с pgvector.
+4. `make migrate` — схема БД (после T1.2).
+5. `make backend-dev` — API на http://localhost:8000, документация на `/docs`.
+6. `make mobile-dev` — Expo; QR-код открыть в Expo Go (телефон в той же Wi-Fi).
+
+## Docker и база данных
+
+| Команда | Что делает |
+| --- | --- |
+| `make up` | Поднимает Postgres и ждёт, пока он станет healthy |
+| `make down` | Останавливает контейнеры, данные сохраняются |
+| `make db-reset` | Удаляет volume и создаёт чистую БД (данные пропадут) |
+| `docker compose -f infra/docker-compose.yml ps` | Статус контейнеров |
+| `docker compose -f infra/docker-compose.yml logs -f postgres` | Логи Postgres |
+| `docker compose -f infra/docker-compose.yml exec postgres psql -U vocabulary -d vocabulary` | Консоль psql |
+| `docker compose -f infra/docker-compose.yml exec postgres psql -U vocabulary -d vocabulary_test` | Тестовая БД |
+
+- Базы: `vocabulary` (разработка) и `vocabulary_test` (тесты). Пользователь и пароль: `vocabulary`.
+- Порт 5432. Если он занят локальным Postgres, остановите его.
+- Скрипт из `infra/postgres-init/` выполняется только при первом создании volume; чтобы он
+  сработал снова, нужен `make db-reset`.
+
+## Backend
+
+| Команда | Что делает |
+| --- | --- |
+| `make backend-dev` | FastAPI с автоперезагрузкой на :8000 |
+| `make backend-check` | ruff check, ruff format --check, mypy, pytest |
+| `make backend-fix` | ruff format и ruff check --fix |
+| `make migrate` | `alembic upgrade head` |
+| `make migration name=add_book_chunk` | Автогенерация миграции (результат прочитать и поправить) |
+| `cd backend && uv add <пакет>` | Добавить зависимость (`--dev` для dev) |
+| `cd backend && uv run pytest tests/path -k name` | Выборочный запуск тестов |
+| `docker build -t vocab-backend backend` | Сборка production-образа |
+
+Проверка миграции: `alembic upgrade head`, `alembic downgrade -1`, снова `alembic upgrade head`
+(из `backend/` через `uv run`).
+
+## Mobile
+
+| Команда | Что делает |
+| --- | --- |
+| `make mobile-dev` | `expo start` |
+| `make mobile-check` | tsc, eslint, steiger, jest |
+| `make api-types` | Экспорт OpenAPI из backend и генерация `mobile/src/shared/api/schema.d.ts` |
+
+API на телефоне доступен по LAN-IP компьютера, не по `localhost` (`EXPO_PUBLIC_API_URL` в `mobile/.env`).
+
+## Evals (платные вызовы OpenAI)
+
+`cd backend && uv run python -m evals run <suite>`

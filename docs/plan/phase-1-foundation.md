@@ -7,7 +7,7 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 ## Backend
 
-### T1.1 — Каркас FastAPI                                        ~3 ч   [ ]
+### T1.1 — Каркас FastAPI                                        ~3 ч   [x]
 
 **Цель:** запускаемое приложение с конфигурацией, логами, единым форматом ошибок и `/health`.
 **Контекст:** ARCHITECTURE.md §3, §4, §7 (соглашения об ошибках); `backend/CLAUDE.md`.
@@ -27,6 +27,8 @@ onboarding, пользователь сохранён в БД, CI зелёный
 формате `{"error": {"code": "validation_error", ...}}`; `make backend-check` зелёный.
 **Тесты:** health; формат AppError; формат ошибки валидации; request id в ответе.
 **Skills:** `backend-module`, `backend-testing`.
+
+> Итог: каркас FastAPI, конфиг, structlog с `X-Request-ID`, единый формат ошибок, `/health`, Dockerfile и 8 тестов. Отличия: `AppError` задаёт `code`/`status_code` атрибутами подкласса (зафиксировано в ARCHITECTURE §7); `/health` лежит вне `/api/v1`, в `app/core/health.py`. Не сделано: HEALTHCHECK и пин тега образа в Dockerfile, приём входящего `X-Request-ID`.
 
 ### T1.2 — База данных и Alembic                                 ~3 ч   [ ]
 

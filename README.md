@@ -12,6 +12,7 @@
 - [Архитектура](docs/ARCHITECTURE.md)
 - [Решения (ADR)](docs/DECISIONS.md)
 - [План разработки](docs/plan/README.md)
+- [Команды разработки (Docker, backend, mobile)](docs/DEVELOPMENT.md)
 
 ## Структура
 
