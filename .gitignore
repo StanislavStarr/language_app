@@ -11,15 +11,22 @@ __pycache__/
 .ruff_cache/
 htmlcov/
 .coverage
+backend/evals/.cache/
 
 node_modules/
+.expo/
 dist/
-.angular/
 coverage/
+mobile/android/
+mobile/ios/
+*.apk
+*.aab
+*.ipa
 
-media/
-postgres-data/
+data/
 backups/
+postgres-data/
 *.log
 
 .cursor/
+.claude/settings.local.json
