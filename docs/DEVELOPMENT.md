@@ -24,6 +24,7 @@
 | `docker compose -f infra/docker-compose.yml exec postgres psql -U vocabulary -d vocabulary_test` | Тестовая БД |
 
 - Базы: `vocabulary` (разработка) и `vocabulary_test` (тесты). Пользователь и пароль: `vocabulary`.
+- Тесты ждут, что `vocabulary_test` существует; если её нет (volume создан до T0.3), выполните `make db-reset`.
 - Порт 5432. Если он занят локальным Postgres, остановите его.
 - Скрипт из `infra/postgres-init/` выполняется только при первом создании volume; чтобы он
   сработал снова, нужен `make db-reset`.

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     app_env: AppEnv = "local"
     log_level: LogLevel = "INFO"
+    database_url: str = "postgresql+psycopg://vocabulary:vocabulary@localhost:5432/vocabulary"
 
 
 @lru_cache

@@ -30,7 +30,7 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 > Итог: каркас FastAPI, конфиг, structlog с `X-Request-ID`, единый формат ошибок, `/health`, Dockerfile и 8 тестов. Отличия: `AppError` задаёт `code`/`status_code` атрибутами подкласса (зафиксировано в ARCHITECTURE §7); `/health` лежит вне `/api/v1`, в `app/core/health.py`. Не сделано: HEALTHCHECK и пин тега образа в Dockerfile, приём входящего `X-Request-ID`.
 
-### T1.2 — База данных и Alembic                                 ~3 ч   [ ]
+### T1.2 — База данных и Alembic                                 ~3 ч   [x]
 
 **Цель:** async-подключение к Postgres, миграции, справочник языков.
 **Контекст:** ARCHITECTURE.md §5, §12; skill `backend-migration`.
@@ -47,6 +47,8 @@ onboarding, пользователь сохранён в БД, CI зелёный
 **Приёмка:** `make migrate` применяет миграции; `alembic downgrade base` и снова `upgrade head`
 работают; `/ready` = 200 при живой БД и 503 без неё.
 **Тесты:** `/ready`; `GET /languages`; миграции туда-обратно.
+
+> Итог: `core/database.py`, async Alembic, миграция 0001 (расширения, `language`, `en`/`ru`), модуль `languages`, `/ready`, транзакционные тесты на `vocabulary_test`. Отличия: `/ready` в `core/health.py` с кодом `database_unavailable` (503, внесён в ARCHITECTURE §7); `database_url` имеет локальное значение по умолчанию; `alembic/` добавлен в mypy.
 
 ### T1.3 — Фоновые задачи на Procrastinate                       ~3 ч   [ ]
 

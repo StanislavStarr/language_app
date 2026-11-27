@@ -3,9 +3,12 @@ name = "vocabulary-backend"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.20.1",
     "fastapi[standard]>=0.165.0",
     "httpx>=0.29.0",
+    "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.3",
+    "sqlalchemy[asyncio]>=2.1.9",
     "structlog>=26.1.0",
 ]
 
@@ -33,7 +36,7 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "ARG", "P
 strict = true
 python_version = "3.13"
 plugins = ["pydantic.mypy"]
-files = ["app", "tests"]
+files = ["app", "tests", "alembic"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

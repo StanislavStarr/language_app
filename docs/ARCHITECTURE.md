@@ -367,7 +367,7 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
   строка, клиент ветвится по коду, не по тексту. Базовый `AppError` задаёт `code` и `status_code`
   атрибутами класса; каждый модуль объявляет подклассы в `exceptions.py`. Общие коды:
   `validation_error` (422), `not_found` (404), `method_not_allowed` (405), `http_error`
-  (прочие HTTP-ошибки фреймворка), `internal_error` (500).
+  (прочие HTTP-ошибки фреймворка), `internal_error` (500), `database_unavailable` (503).
 - Пагинация списков — курсором (`cursor`, `next_cursor`).
 - Схема OpenAPI — источник типов для клиента (`mobile/src/shared/api/schema.d.ts` генерируется).
 
