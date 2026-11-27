@@ -1,0 +1,66 @@
+name: backend
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "backend/**"
+      - "infra/postgres-init/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "infra/postgres-init/**"
+      - ".github/workflows/backend.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PGHOST: localhost
+      POSTGRES_USER: vocabulary
+      POSTGRES_PASSWORD: vocabulary
+      POSTGRES_DB: vocabulary
+      DATABASE_URL: postgresql+psycopg://vocabulary:vocabulary@localhost:5432/vocabulary
+      APP_ENV: test
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: vocabulary
+          POSTGRES_PASSWORD: vocabulary
+          POSTGRES_DB: vocabulary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vocabulary -d vocabulary"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+      - name: Create test database
+        working-directory: .
+        env:
+          PGPASSWORD: vocabulary
+        run: sh infra/postgres-init/01-create-test-database.sh
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - run: uv run pytest
