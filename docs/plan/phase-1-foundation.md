@@ -135,7 +135,7 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 
 > Итог: Expo SDK 58 (blank-typescript + Expo Router вручную, корень маршрутов `app/` задан в `app.json`), FSD в `src/`, алиас `@/`, ESLint flat config с запретом глубоких импортов, Prettier, `steiger`, `jest-expo` + RNTL (11 тестов), тема (светлая/тёмная) и базовые компоненты, `shared/config/env.ts`. Отличия: слои `widgets`, `features`, `entities` не созданы (пустых папок нет); `src/app` без сегментов, иначе `steiger` ругается; нужен пакет `@react-native/jest-preset`. Проверка `env` при старте появится в T1.8, когда API-клиент впервые импортирует `env`. Проверено в Expo Go на телефоне: приложение открывается (для SDK 58 нужен вход в аккаунт Expo в приложении и в CLI).
 
-### T1.8 — API-слой и пробуждение сервера                         ~3 ч   [ ]
+### T1.8 — API-слой и пробуждение сервера                         ~3 ч   [x]
 
 **Цель:** типизированный клиент API, нормализованные ошибки, обработка холодного старта.
 **Контекст:** ARCHITECTURE.md §7, §12; DECISIONS ADR-010; skill `mobile-api-sync`.
@@ -151,6 +151,8 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 
 **Тесты:** `toApiError` для формата ошибки backend, сетевой ошибки, неизвестного ответа;
 политика ретраев.
+
+> Итог: `backend/scripts/export_openapi.py` + `make api-types` (типы генерируются с `--default-non-nullable false`, чтобы поля с default не были обязательными в запросах); `shared/api`: `ApiError`/`toApiError`, клиент `openapi-fetch`, `unwrap`, граница сетевых ошибок (`fetchOrThrowNetworkError`), middleware авторизации (один общий refresh, повтор один раз, без повтора для `/auth/device`, без лишнего refresh при «позднем» 401), политика ретраев (сеть и 502/503/504, ≈90 с, мутации без ретраев), `QueryClient`; виджет `server-wake-banner` (баннер выводится из `QueryCache`). 9 новых файлов тестов (51 тест mobile, 64 backend). Отложено в T1.9: подключение `configureApiAuth` к сессии, `error-messages.ts`, ручная проверка баннера (остановить `make backend-dev` и запустить приложение). Ограничение: middleware клонирует каждый запрос, для загрузки книг (T3.x) это нужно пересмотреть.
 
 ### T1.9 — Вход по устройству на клиенте                          ~2 ч   [ ]
 

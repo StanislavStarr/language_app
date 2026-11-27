@@ -37,5 +37,5 @@ mobile-check:
 	cd mobile && npx tsc --noEmit && npx eslint . && npx steiger ./src && npx jest
 
 api-types:
-	cd backend && uv run python scripts/export_openapi.py
-	cd mobile && npx openapi-typescript ../$(OPENAPI_FILE) -o src/shared/api/schema.d.ts
+	cd backend && uv run python -m scripts.export_openapi
+	cd mobile && npm run api:generate

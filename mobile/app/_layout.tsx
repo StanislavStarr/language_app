@@ -1,13 +1,3 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { RootLayout } from '@/app';
 
-import { AppProviders } from '@/app';
-
-export default function RootLayout() {
-  return (
-    <AppProviders>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </AppProviders>
-  );
-}
+export default RootLayout;
