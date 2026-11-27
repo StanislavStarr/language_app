@@ -114,7 +114,7 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 
 ## Mobile
 
-### T1.7 — Каркас Expo-приложения по FSD                          ~3 ч   [ ]
+### T1.7 — Каркас Expo-приложения по FSD                          ~3 ч   [x]
 
 **Цель:** приложение запускается в Expo Go, структура FSD, линтеры и тесты настроены.
 **Контекст:** `mobile/CLAUDE.md`; ARCHITECTURE.md §3 (Mobile); DECISIONS ADR-002, ADR-012.
@@ -132,6 +132,8 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 **Приёмка:** `npx expo start` → приложение открывается на телефоне; `make mobile-check` зелёный.
 **Тесты:** рендер `Button` и `ErrorState`.
 **Skills:** `mobile-fsd-slice`, `mobile-testing`.
+
+> Итог: Expo SDK 58 (blank-typescript + Expo Router вручную, корень маршрутов `app/` задан в `app.json`), FSD в `src/`, алиас `@/`, ESLint flat config с запретом глубоких импортов, Prettier, `steiger`, `jest-expo` + RNTL (11 тестов), тема (светлая/тёмная) и базовые компоненты, `shared/config/env.ts`. Отличия: слои `widgets`, `features`, `entities` не созданы (пустых папок нет); `src/app` без сегментов, иначе `steiger` ругается; нужен пакет `@react-native/jest-preset`. Проверка `env` при старте появится в T1.8, когда API-клиент впервые импортирует `env`. Проверено в Expo Go на телефоне: приложение открывается (для SDK 58 нужен вход в аккаунт Expo в приложении и в CLI).
 
 ### T1.8 — API-слой и пробуждение сервера                         ~3 ч   [ ]
 

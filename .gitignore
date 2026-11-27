@@ -30,3 +30,12 @@ postgres-data/
 
 .cursor/
 .claude/settings.local.json
+
+mobile/expo-env.d.ts
+mobile/web-build/
+*.tsbuildinfo
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision

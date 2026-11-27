@@ -67,3 +67,15 @@ API на телефоне доступен по LAN-IP компьютера, н�
   (в `.env` указать `JOBS_RUN_IN_PROCESS=false`).
 - Схема Procrastinate ставится миграцией 0002; версия библиотеки закреплена точно, при её
   обновлении добавляется новая ревизия Alembic.
+
+## Mobile
+
+- Expo SDK 58, Expo Router: маршруты лежат в `mobile/app/`, FSD-слои — в `mobile/src/`
+  (`app/` внутри `src` — это слой FSD, а не маршруты; корень маршрутов задан в `app.json`).
+- Первый запуск: `cd mobile && npm install`, затем `mobile/.env` по образцу `.env.example`
+  (`EXPO_PUBLIC_API_URL` — LAN-IP компьютера), `make mobile-dev` из корня репозитория (или `npm start` в
+  `mobile/`), QR-код — в Expo Go. Expo Go для SDK 58 требует входа в один и тот же бесплатный
+  аккаунт Expo и в приложении, и в CLI (`npx expo login`).
+- Скрипты: `npm run typecheck | lint | lint:fsd | test | format`; всё сразу — `make mobile-check`.
+- Зависимости с нативной частью — только через `npx expo install` и только из Expo Go (ADR-002).
+
