@@ -7,3 +7,5 @@
 
 ## Идеи
 
+
+- `WWW-Authenticate: Bearer` в ответах 401 (RFC 6750).

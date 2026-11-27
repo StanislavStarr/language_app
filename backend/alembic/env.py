@@ -23,6 +23,12 @@ load_all_models()
 target_metadata = Base.metadata
 
 
+def include_object(
+    _obj: object, name: str | None, _type: str, reflected: bool, compare_to: object
+) -> bool:
+    return not (reflected and compare_to is None and (name or "").startswith("procrastinate_"))
+
+
 def database_url() -> str:
     return config.get_main_option("sqlalchemy.url") or get_settings().database_url
 
@@ -33,13 +39,19 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         compare_type=True,
+        include_object=include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        include_object=include_object,
+    )
     with context.begin_transaction():
         context.run_migrations()
 

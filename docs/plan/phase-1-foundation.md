@@ -69,7 +69,7 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 > Итог: `core/jobs.py` (`jobs_app`, `ping_job`, `run_jobs`, `requeue_stalled_jobs`), миграция 0002 со схемой Procrastinate, воркер в lifespan с graceful-остановкой (таймаут 30 с), фикстура `in_memory_jobs`, 6 тестов. Отличия: приложение называется `jobs_app` (путь CLI обновлён в ARCHITECTURE §10); версия procrastinate закреплена `==3.12.0`; зависшие задачи ищутся через `get_stalled_jobs(nb_seconds=900)` — параметр deprecated, при обновлении перейти на heartbeat. Не сделано: падение БД при старте блокирует запуск API (поведение не менялось).
 
-### T1.4 — Вход по устройству и профиль                          ~4 ч   [ ]
+### T1.4 — Вход по устройству и профиль                          ~4 ч   [x]
 
 **Цель:** анонимный аккаунт, JWT, профиль с onboarding.
 **Контекст:** ARCHITECTURE.md §5.1, §8; DECISIONS ADR-003.
@@ -84,6 +84,8 @@ onboarding, пользователь сохранён в БД, CI зелёный
 **Приёмка:** новое устройство → новый пользователь; повтор с тем же секретом → тот же пользователь;
 неверный секрет → 401 `invalid_device_credentials`.
 **Тесты:** все ветки входа; истёкший токен; PATCH с неверным CEFR → 422.
+
+> Итог: модули `auth` (`POST /auth/device`, `get_current_user`) и `users` (`GET`/`PATCH /users/me`), `core/security.py` (JWT HS256, sha256 + `compare_digest`), миграция 0003, 17 новых тестов. Решения: новый пользователь получает A1 и `en_simple`; `complete_onboarding` ставит дату один раз и не сбрасывается; гонку первого входа разрешает savepoint + повторное чтение; `JWT_SECRET` ≥ 32 символов и обязателен в production; пустые переменные окружения игнорируются. Попутно `alembic/env.py` исключает таблицы `procrastinate_*` из autogenerate. Не сделано: `WWW-Authenticate` в 401, `DELETE /users/me`.
 
 ### T1.5 — Лимиты использования                                  ~2 ч   [ ]
 

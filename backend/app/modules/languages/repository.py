@@ -13,3 +13,6 @@ class LanguageRepository:
     async def list_all(self) -> Sequence[Language]:
         result = await self._session.scalars(select(Language).order_by(Language.id))
         return result.all()
+
+    async def find_by_code(self, code: str) -> Language | None:
+        return await self._session.scalar(select(Language).where(Language.code == code))

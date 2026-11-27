@@ -368,6 +368,8 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
   атрибутами класса; каждый модуль объявляет подклассы в `exceptions.py`. Общие коды:
   `validation_error` (422), `not_found` (404), `method_not_allowed` (405), `http_error`
   (прочие HTTP-ошибки фреймворка), `internal_error` (500), `database_unavailable` (503).
+  Auth: `invalid_device_credentials`, `token_missing`, `token_invalid`, `token_expired` (все 401).
+  Справочники: `language_not_found` (404).
 - Пагинация списков — курсором (`cursor`, `next_cursor`).
 - Схема OpenAPI — источник типов для клиента (`mobile/src/shared/api/schema.d.ts` генерируется).
 
@@ -379,9 +381,14 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
 POST /auth/device {install_id, device_secret}
    нет identity → создать user + auth_identity(provider=device, external_id=install_id, secret_hash=sha256)
    есть        → сравнить хэш (constant-time) → 401 при несовпадении
-   → access_token (JWT HS256, TTL 7 дней, sub = user.id)
+   → access_token (JWT HS256, TTL 7 дней, sub = user.id; ключ `JWT_SECRET`, не короче 32 символов,
+     в production обязателен собственный)
 клиент: при 401 повторяет /auth/device и запрос (один раз)
 ```
+
+Новый пользователь создаётся с RU → EN, уровнем A1 и ответами `en_simple`; `PATCH /users/me`
+с `complete_onboarding: true` один раз ставит `onboarding_completed_at`, сбросить его нельзя.
+Параллельный первый вход с тем же `install_id` разрешается через savepoint и повторное чтение.
 
 `user.id` — внутренний UUID; `install_id` хранится только в `auth_identity`. Позже добавляются
 провайдеры `email`/`google`/`apple` и привязка к существующему пользователю.
