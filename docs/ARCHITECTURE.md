@@ -215,7 +215,7 @@ jobs (Procrastinate) → service
 ### 6.1. Импорт лексикона (один раз, локально)
 
 ```text
-kaikki.org English JSONL ──► scripts/import_lexicon.py
+kaikki.org raw Wiktextract JSONL (.gz) ──► scripts/import_lexicon.py
    1. оставить lang_code = "en" и леммы из частотного списка (top N, по умолчанию 60 000)
    2. lexeme: слово, IPA (первая US/UK), mp3_url произношения
    3. lexeme_form: формы (went → go, books → book) из поля forms / form_of
@@ -224,6 +224,12 @@ kaikki.org English JSONL ──► scripts/import_lexicon.py
    6. фразы (phrasal verbs, idioms) из того же дампа — type = phrase
    └► upsert батчами, идемпотентно (повторный запуск не дублирует)
 ```
+
+Источник — «сырой» дамп `raw-wiktextract-data.jsonl.gz` (3 ГБ): общий английский дамп kaikki теряет
+большую часть переводов (см. `docs/spikes/lexicon-coverage.md`). Английские строки отбираются по
+`"lang_code": "en"`; пропускаются `pos = name` и слова не из a–z. Фразы импортируются, если все их
+слова входят в топ-30 000 (≈ 28 тысяч). Оценка размера при N = 60 000: ≈ 50 МБ плюс ≈ 11 МБ фраз;
+русский перевод есть примерно у 56% лемм, остальное переводит AI по запросу.
 
 Запускается с машины разработчика против Neon (`DATABASE_URL`), не на Render: там 512 МБ памяти.
 Отчёт импорта: сколько лемм, доля значений с русским переводом, размер таблиц. Цель — лексикон
