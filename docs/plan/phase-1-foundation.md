@@ -154,7 +154,7 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 
 > Итог: `backend/scripts/export_openapi.py` + `make api-types` (типы генерируются с `--default-non-nullable false`, чтобы поля с default не были обязательными в запросах); `shared/api`: `ApiError`/`toApiError`, клиент `openapi-fetch`, `unwrap`, граница сетевых ошибок (`fetchOrThrowNetworkError`), middleware авторизации (один общий refresh, повтор один раз, без повтора для `/auth/device`, без лишнего refresh при «позднем» 401), политика ретраев (сеть и 502/503/504, ≈90 с, мутации без ретраев), `QueryClient`; виджет `server-wake-banner` (баннер выводится из `QueryCache`). 9 новых файлов тестов (51 тест mobile, 64 backend). Отложено в T1.9: подключение `configureApiAuth` к сессии, `error-messages.ts`, ручная проверка баннера (остановить `make backend-dev` и запустить приложение). Ограничение: middleware клонирует каждый запрос, для загрузки книг (T3.x) это нужно пересмотреть.
 
-### T1.9 — Вход по устройству на клиенте                          ~2 ч   [ ]
+### T1.9 — Вход по устройству на клиенте                          ~2 ч   [x]
 
 **Сделать:**
 - `entities/session`: хранение `install_id`/`device_secret` в `expo-secure-store`,
@@ -165,6 +165,8 @@ service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`,
 
 **Приёмка:** первый запуск создаёт пользователя; перезапуск — тот же пользователь.
 **Тесты:** генерация и чтение кредов (mock secure-store); повтор при 401.
+
+> Итог: `entities/session` (генерация и хранение кредов в `expo-secure-store` с проверкой через `zod`, Zustand-store с токеном в памяти, запрос `/auth/device`), `features/device-sign-in` (вход при старте как TanStack-запрос, поэтому ретраи холодного старта и баннер работают), `src/app` (`SessionGate` со сплэшем, `configureApiAuthorization` для повторного входа при 401), `pages/sign-in-error`, `shared/api/error-messages.ts`. Отличия: `GestureHandlerRootView` и `BottomSheetModalProvider` не добавлены — их подключит первая задача с нижней панелью (T2.x), чтобы не тянуть `reanimated` раньше времени; сплэш держится до результата или первой неудачной попытки (иначе он закрывал бы баннер при холодном старте); нечитаемые креды в хранилище не удаляются молча (это создало бы новый аккаунт), а показывают экран ошибки; токен не отправляется на `/auth/device`; `make backend-dev` слушает `0.0.0.0` для телефона. Найденный на телефоне баг: `openapi-fetch` требует глобальный `Response` из `onResponse`, а `fetch` в Expo Go отдаёт свой класс; middleware теперь возвращает `undefined` без повтора и приводит повторный ответ к стандартному `Response` (покрыто тестом с подменой `Response`). Проверено вручную в Expo Go: вход создаёт пользователя, перезапуск входит тем же, баннер и экран ошибки работают.
 
 ### T1.10 — Onboarding, вкладки, профиль                          ~3 ч   [ ]
 

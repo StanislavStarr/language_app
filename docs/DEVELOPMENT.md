@@ -8,7 +8,8 @@
 2. `cp backend/.env.example backend/.env` и заполнить значения (`OPENAI_API_KEY` и др. — вручную).
 3. `make up` — Postgres с pgvector.
 4. `make migrate` — схема БД (после T1.2).
-5. `make backend-dev` — API на http://localhost:8000, документация на `/docs`.
+5. `make backend-dev` — API на http://localhost:8000 (сервер слушает `0.0.0.0`, чтобы телефон достучался
+   по LAN-IP; только для доверенных сетей, не запускайте в публичном Wi-Fi), документация на `/docs`.
 6. `make mobile-dev` — Expo; QR-код открыть в Expo Go (телефон в той же Wi-Fi).
 
 ## Docker и база данных

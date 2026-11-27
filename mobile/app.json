@@ -27,7 +27,9 @@
         {
           "root": "app"
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-splash-screen"
     ],
     "scheme": "english-reader"
   }

@@ -9,6 +9,26 @@ export type ApiAuth = {
   refreshSession: () => Promise<void>;
 };
 
+const NULL_BODY_STATUSES: readonly number[] = [101, 204, 205, 304];
+
+type ResponseLike = Pick<Response, 'status' | 'statusText' | 'headers' | 'arrayBuffer'>;
+
+async function toStandardResponse(response: ResponseLike): Promise<Response> {
+  if (response instanceof Response) {
+    return response;
+  }
+  const body = NULL_BODY_STATUSES.includes(response.status) ? null : await response.arrayBuffer();
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
+
+function isSignInRequest(request: Request): boolean {
+  return new URL(request.url).pathname === AUTH_DEVICE_PATH;
+}
+
 type RetryFetch = (request: Request) => Promise<Response>;
 
 export function createAuthMiddleware(
@@ -35,7 +55,7 @@ export function createAuthMiddleware(
 
   return {
     onRequest({ request }) {
-      const token = getAuth()?.getAccessToken() ?? null;
+      const token = isSignInRequest(request) ? null : (getAuth()?.getAccessToken() ?? null);
       pristineRequests.set(request, request.clone());
       sentTokens.set(request, token);
       return withToken(request, token);
@@ -46,14 +66,18 @@ export function createAuthMiddleware(
       const sentToken = sentTokens.get(request);
       pristineRequests.delete(request);
       sentTokens.delete(request);
-      const isSignIn = new URL(request.url).pathname === AUTH_DEVICE_PATH;
-      if (response.status !== 401 || auth === null || pristine === undefined || isSignIn) {
-        return response;
+      if (
+        response.status !== 401 ||
+        auth === null ||
+        pristine === undefined ||
+        isSignInRequest(request)
+      ) {
+        return undefined;
       }
       if (auth.getAccessToken() === sentToken) {
         await refreshOnce(auth);
       }
-      return retryFetch(withToken(pristine, auth.getAccessToken()));
+      return toStandardResponse(await retryFetch(withToken(pristine, auth.getAccessToken())));
     },
   };
 }

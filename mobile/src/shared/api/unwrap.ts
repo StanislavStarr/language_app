@@ -1,22 +1,32 @@
-import { toApiError } from './api-error';
+import { ApiError, toApiError, UNKNOWN_ERROR_CODE } from './api-error';
+import { reportUnexpectedError } from './report-unexpected-error';
 
-type SuccessResult<T> = { data: T; error?: undefined; response: Response };
-type FailureResult<E> = { data?: undefined; error: E; response: Response };
-type ClientResult<T, E> = SuccessResult<T> | FailureResult<E>;
+type ClientResult = { data?: unknown; error?: unknown; response: Response };
+type SuccessOf<R extends ClientResult> = Extract<R, { error?: never }>;
 
-function isFailure<T, E>(result: ClientResult<T, E>): result is FailureResult<E> {
-  return result.error !== undefined;
+function isSuccess<R extends ClientResult>(result: R): result is SuccessOf<R> {
+  return result.error === undefined;
 }
 
-export async function unwrap<T, E>(request: Promise<ClientResult<T, E>>): Promise<T> {
-  let result: ClientResult<T, E>;
+export async function unwrap<R extends ClientResult>(
+  request: Promise<R>,
+): Promise<SuccessOf<R>['data']> {
+  let result: R;
   try {
     result = await request;
   } catch (caught) {
-    throw toApiError(caught);
+    const apiError = toApiError(caught);
+    if (!(caught instanceof ApiError)) {
+      reportUnexpectedError('request threw', caught);
+    }
+    throw apiError;
   }
-  if (isFailure(result)) {
-    throw toApiError(result.error, result.response.status);
+  if (!isSuccess(result)) {
+    const apiError = toApiError(result.error, result.response.status);
+    if (apiError.code === UNKNOWN_ERROR_CODE) {
+      reportUnexpectedError(`unexpected response (HTTP ${result.response.status})`, result.error);
+    }
+    throw apiError;
   }
   return result.data;
 }

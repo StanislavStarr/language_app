@@ -15,7 +15,7 @@ db-reset:
 	$(COMPOSE) up -d --wait postgres
 
 backend-dev:
-	cd backend && uv run fastapi dev
+	cd backend && uv run fastapi dev --host 0.0.0.0
 
 backend-check:
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest

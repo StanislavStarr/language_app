@@ -102,6 +102,17 @@ describe('auth middleware', () => {
     expect(fakeFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('does not send the access token to the sign-in endpoint', async () => {
+    const { auth } = createAuth('old');
+    const { client, seenTokens } = setup(auth);
+
+    await client.POST('/api/v1/auth/device', {
+      body: { install_id: '5b1b9d52-7a6e-4c6a-a7d4-1f1b8b8a0001', device_secret: 's'.repeat(43) },
+    });
+
+    expect(seenTokens).toEqual([null]);
+  });
+
   it('sends requests without a token when auth is not configured', async () => {
     const { client, fakeFetch, seenTokens } = setup(null);
 
@@ -163,5 +174,56 @@ describe('auth middleware', () => {
     expect(result.response.status).toBe(200);
     expect(refreshSession).toHaveBeenCalledTimes(1);
     expect(seenTokens).toEqual(['Bearer old', 'Bearer new']);
+  });
+
+  describe('when the runtime fetch returns its own Response class, as React Native does', () => {
+    const RealResponse = Response;
+
+    class RuntimeResponse extends RealResponse {}
+
+    beforeEach(() => {
+      globalThis.Response = RuntimeResponse;
+    });
+
+    afterEach(() => {
+      globalThis.Response = RealResponse;
+    });
+
+    function setupRuntimeFetch(auth: ApiAuth) {
+      const fakeFetch = jest.fn((request: Request) => {
+        const authorized = request.headers.get('Authorization') === 'Bearer new';
+        const response = authorized
+          ? new RealResponse(JSON.stringify(USER_BODY), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            })
+          : new RealResponse(JSON.stringify({ error: { code: 'token_expired', message: 'x' } }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            });
+        return Promise.resolve(response);
+      });
+      const client = createClient<paths>({ baseUrl: 'http://api.test', fetch: fakeFetch });
+      client.use(createAuthMiddleware(() => auth, fakeFetch));
+      return client;
+    }
+
+    it('passes a successful response through untouched', async () => {
+      const { auth } = createAuth('new');
+
+      const result = await setupRuntimeFetch(auth).GET('/api/v1/users/me');
+
+      expect(result.response.status).toBe(200);
+      expect(result.data).toEqual(USER_BODY);
+    });
+
+    it('returns a standard Response for the retried request', async () => {
+      const { auth } = createAuth('old');
+
+      const result = await setupRuntimeFetch(auth).GET('/api/v1/users/me');
+
+      expect(result.response.status).toBe(200);
+      expect(result.data).toEqual(USER_BODY);
+    });
   });
 });
