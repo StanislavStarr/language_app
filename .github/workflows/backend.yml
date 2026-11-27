@@ -64,3 +64,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy .
       - run: uv run pytest
+      - name: Check openapi.json matches the backend code
+        run: |
+          uv run python -m scripts.export_openapi
+          git diff --exit-code -- openapi.json

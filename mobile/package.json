@@ -53,7 +53,7 @@
     "test": "jest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "api:generate": "openapi-typescript ../backend/openapi.json -o src/shared/api/schema.d.ts --default-non-nullable false"
+    "api:generate": "openapi-typescript ../backend/openapi.json -o src/shared/api/schema.d.ts --default-non-nullable false && prettier --write src/shared/api/schema.d.ts"
   },
   "private": true
 }
