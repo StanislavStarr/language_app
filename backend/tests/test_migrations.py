@@ -36,6 +36,7 @@ def test_upgrade_seeds_languages_and_downgrade_removes_schema(scratch_database_u
     user_tables = fetch_all(
         scratch_database_url, "SELECT to_regclass('\"user\"'), to_regclass('auth_identity')"
     )
+    usage_table = fetch_all(scratch_database_url, "SELECT to_regclass('daily_usage')")
     seeded = fetch_all(scratch_database_url, "SELECT code FROM language ORDER BY id")
     extensions = fetch_all(scratch_database_url, "SELECT extname FROM pg_extension")
     command.downgrade(config, "base")
@@ -47,8 +48,13 @@ def test_upgrade_seeds_languages_and_downgrade_removes_schema(scratch_database_u
     user_tables_after_downgrade = fetch_all(
         scratch_database_url, "SELECT to_regclass('\"user\"'), to_regclass('auth_identity')"
     )
+    usage_table_after_downgrade = fetch_all(
+        scratch_database_url, "SELECT to_regclass('daily_usage')"
+    )
     command.upgrade(config, "head")
 
+    assert usage_table == [("daily_usage",)]
+    assert usage_table_after_downgrade == [(None,)]
     assert user_tables == [('"user"', "auth_identity")]
     assert user_tables_after_downgrade == [(None, None)]
     assert jobs_table == [("procrastinate_jobs",)]

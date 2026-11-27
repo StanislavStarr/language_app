@@ -87,7 +87,7 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 > Итог: модули `auth` (`POST /auth/device`, `get_current_user`) и `users` (`GET`/`PATCH /users/me`), `core/security.py` (JWT HS256, sha256 + `compare_digest`), миграция 0003, 17 новых тестов. Решения: новый пользователь получает A1 и `en_simple`; `complete_onboarding` ставит дату один раз и не сбрасывается; гонку первого входа разрешает savepoint + повторное чтение; `JWT_SECRET` ≥ 32 символов и обязателен в production; пустые переменные окружения игнорируются. Попутно `alembic/env.py` исключает таблицы `procrastinate_*` из autogenerate. Не сделано: `WWW-Authenticate` в 401, `DELETE /users/me`.
 
-### T1.5 — Лимиты использования                                  ~2 ч   [ ]
+### T1.5 — Лимиты использования                                  ~2 ч   [x]
 
 **Цель:** общий механизм суточных лимитов и частоты запросов.
 **Контекст:** ARCHITECTURE.md §11.
@@ -101,6 +101,8 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 **Тесты:** конкурентные `consume` не превышают лимит; сброс по дням (часовой пояс UTC);
 rate limit отдаёт 429.
+
+> Итог: модуль `usage` (`daily_usage`, `UsageService.consume` с атомарным upsert, миграция 0004), `core/rate_limit.py` (скользящее окно, `Retry-After`, вытеснение устаревших ключей), `RateLimitedUser` применён к `/users/me`, лимиты в `Settings`, 14 новых тестов, включая конкурентный `consume`. Отличия: `AppError` получил необязательные заголовки; зависимость rate limit лежит в `auth/dependencies.py`, а не в `core`, чтобы `core` не зависел от модулей; квота не возвращается при сбое (ADR-013). `UsageServiceDep` пока никем не используется — его подключит T2.x.
 
 ### T1.6 — CI для backend                                        ~1 ч   [ ]
 

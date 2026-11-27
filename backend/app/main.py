@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import timedelta
 
 from fastapi import FastAPI
 
@@ -10,6 +11,7 @@ from app.core.database import create_engine, create_session_factory
 from app.core.errors import ErrorResponse, register_error_handlers
 from app.core.jobs import jobs_app, run_jobs
 from app.core.logging import RequestContextMiddleware, configure_logging
+from app.core.rate_limit import SlidingWindowRateLimiter
 
 
 @asynccontextmanager
@@ -32,6 +34,9 @@ def create_app() -> FastAPI:
         title="English Reader & Vocabulary",
         lifespan=lifespan,
         responses={422: {"model": ErrorResponse}},
+    )
+    app.state.rate_limiter = SlidingWindowRateLimiter(
+        settings.rate_limit_per_minute, timedelta(minutes=1)
     )
     app.add_middleware(RequestContextMiddleware)
     register_error_handlers(app)

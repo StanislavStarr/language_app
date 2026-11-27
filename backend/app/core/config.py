@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://vocabulary:vocabulary@localhost:5432/vocabulary"
     jwt_secret: SecretStr = Field(default=SecretStr(DEFAULT_JWT_SECRET), min_length=32)
     access_token_ttl_days: int = Field(default=7, ge=1)
+    daily_limit_ai_lookup: int = Field(default=100, ge=1)
+    daily_limit_book_question: int = Field(default=30, ge=1)
+    daily_limit_book_upload: int = Field(default=5, ge=1)
+    rate_limit_per_minute: int = Field(default=60, ge=1)
     jobs_run_in_process: bool = True
     jobs_worker_concurrency: int = Field(default=2, ge=1)
 

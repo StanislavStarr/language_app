@@ -16,10 +16,16 @@ class AppError(Exception):
     code = "app_error"
     status_code = status.HTTP_400_BAD_REQUEST
 
-    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        details: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details
+        self.headers = headers
 
 
 class ErrorBody(BaseModel):
@@ -33,16 +39,22 @@ class ErrorResponse(BaseModel):
 
 
 def _error_response(
-    request: Request, status_code: int, code: str, message: str, details: dict[str, Any] | None
+    request: Request,
+    status_code: int,
+    error: ErrorBody,
+    extra_headers: dict[str, str] | None = None,
 ) -> JSONResponse:
-    body = ErrorResponse(error=ErrorBody(code=code, message=message, details=details))
+    headers = dict(extra_headers or {})
     request_id = getattr(request.state, "request_id", None)
-    headers = {REQUEST_ID_HEADER: request_id} if request_id else None
-    return JSONResponse(body.model_dump(), status_code=status_code, headers=headers)
+    if request_id:
+        headers[REQUEST_ID_HEADER] = request_id
+    body = ErrorResponse(error=error)
+    return JSONResponse(body.model_dump(), status_code=status_code, headers=headers or None)
 
 
 async def _handle_app_error(request: Request, exc: AppError) -> JSONResponse:
-    return _error_response(request, exc.status_code, exc.code, exc.message, exc.details)
+    error = ErrorBody(code=exc.code, message=exc.message, details=exc.details)
+    return _error_response(request, exc.status_code, error, exc.headers)
 
 
 async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -50,13 +62,10 @@ async def _handle_validation_error(request: Request, exc: RequestValidationError
         {"loc": [str(part) for part in error["loc"]], "type": error["type"], "msg": error["msg"]}
         for error in exc.errors()
     ]
-    return _error_response(
-        request,
-        status.HTTP_422_UNPROCESSABLE_CONTENT,
-        "validation_error",
-        "Request validation failed",
-        {"fields": fields},
+    error = ErrorBody(
+        code="validation_error", message="Request validation failed", details={"fields": fields}
     )
+    return _error_response(request, status.HTTP_422_UNPROCESSABLE_CONTENT, error)
 
 
 async def _handle_http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
@@ -65,7 +74,8 @@ async def _handle_http_error(request: Request, exc: StarletteHTTPException) -> J
         status.HTTP_405_METHOD_NOT_ALLOWED: "method_not_allowed",
     }
     code = codes.get(exc.status_code, "http_error")
-    return _error_response(request, exc.status_code, code, str(exc.detail), None)
+    error = ErrorBody(code=code, message=str(exc.detail))
+    return _error_response(request, exc.status_code, error)
 
 
 async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
@@ -76,13 +86,8 @@ async def _handle_unexpected_error(request: Request, exc: Exception) -> JSONResp
         error_type=type(exc).__name__,
         exc_info=exc,
     )
-    return _error_response(
-        request,
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
-        "internal_error",
-        "Internal server error",
-        None,
-    )
+    error = ErrorBody(code="internal_error", message="Internal server error")
+    return _error_response(request, status.HTTP_500_INTERNAL_SERVER_ERROR, error)
 
 
 def register_error_handlers(app: FastAPI) -> None:

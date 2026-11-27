@@ -5,6 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import get_settings
 from app.core.database import SessionDep
+from app.core.rate_limit import SlidingWindowRateLimiter, get_rate_limiter
 from app.modules.auth.exceptions import TokenMissingError
 from app.modules.auth.repository import AuthIdentityRepository
 from app.modules.auth.service import AuthService
@@ -31,3 +32,14 @@ async def get_current_user(
 
 
 type CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_rate_limited_user(
+    user: CurrentUser,
+    limiter: Annotated[SlidingWindowRateLimiter, Depends(get_rate_limiter)],
+) -> User:
+    limiter.acquire(user.id)
+    return user
+
+
+type RateLimitedUser = Annotated[User, Depends(get_rate_limited_user)]

@@ -369,7 +369,8 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
   `validation_error` (422), `not_found` (404), `method_not_allowed` (405), `http_error`
   (прочие HTTP-ошибки фреймворка), `internal_error` (500), `database_unavailable` (503).
   Auth: `invalid_device_credentials`, `token_missing`, `token_invalid`, `token_expired` (все 401).
-  Справочники: `language_not_found` (404).
+  Справочники: `language_not_found` (404). Лимиты: `usage_limit_exceeded` (429, `details`: `kind`,
+  `limit`, `resets_at`), `rate_limited` (429, заголовок `Retry-After`).
 - Пагинация списков — курсором (`cursor`, `next_cursor`).
 - Схема OpenAPI — источник типов для клиента (`mobile/src/shared/api/schema.d.ts` генерируется).
 
@@ -450,7 +451,9 @@ backend/evals/
   не больше 20 книг на пользователя.
 - Глобальный суточный предохранитель по токенам OpenAI (`AI_DAILY_TOKEN_BUDGET`): при превышении
   AI-функции временно отключаются и возвращают код `ai_temporarily_unavailable`.
-- Частота запросов: 60 в минуту на пользователя (in-memory, допустимо при одном инстансе).
+- Частота запросов: 60 в минуту на пользователя (in-memory, допустимо при одном инстансе);
+  применяется зависимостью `RateLimitedUser` вместо `CurrentUser`. Суточные лимиты и частота
+  настраиваются через `DAILY_LIMIT_*` и `RATE_LIMIT_PER_MINUTE`; сутки считаются по UTC.
 - XML только через `defusedxml`. Никаких путей из архива в файловую систему.
 - Секреты только из переменных окружения. В клиенте нет ключей OpenAI.
 - Личные данные: книги, вопросы, контекст, заметки — не попадают в общие таблицы и в логи.
