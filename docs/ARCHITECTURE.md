@@ -427,7 +427,9 @@ backend/evals/
 
 - Procrastinate; задачи определены в `modules/<module>/jobs.py` и **только вызывают сервис**.
 - Локально и на Render воркер запускается в lifespan FastAPI (`JOBS_RUN_IN_PROCESS=true`),
-  конкурентность 2. Отдельный процесс — `uv run procrastinate --app=app.core.jobs.app worker`.
+  конкурентность 2. Отдельный процесс — `uv run procrastinate --app=app.core.jobs.jobs_app worker`.
+  Схема Procrastinate ставится миграцией Alembic 0002; при обновлении версии библиотеки нужна
+  новая ревизия с SQL из `procrastinate/sql/migrations`.
 - Задача откладывается (`defer_async`) только **после commit** транзакции, создавшей данные.
 - Все задачи идемпотентны: повторный запуск не дублирует данные и корректно продолжает с текущего статуса.
 - Ретраи ограничены (`RetryStrategy(max_attempts=3, exponential_wait=…)`).

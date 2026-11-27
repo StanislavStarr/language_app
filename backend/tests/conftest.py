@@ -5,9 +5,12 @@ from alembic import command
 from alembic.config import Config
 from app.core.config import get_settings
 from app.core.database import get_session
+from app.core.jobs import jobs_app
 from app.main import create_app
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from procrastinate import App
+from procrastinate.testing import InMemoryConnector
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -63,3 +66,10 @@ async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as http_client:
         yield http_client
+
+
+@pytest.fixture
+def in_memory_jobs() -> Iterator[App]:
+    connector = InMemoryConnector()
+    with jobs_app.replace_connector(connector) as app_with_connector:
+        yield app_with_connector

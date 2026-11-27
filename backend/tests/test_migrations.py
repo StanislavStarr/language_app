@@ -32,13 +32,19 @@ def test_upgrade_seeds_languages_and_downgrade_removes_schema(scratch_database_u
     config = build_alembic_config(scratch_database_url)
 
     command.upgrade(config, "head")
+    jobs_table = fetch_all(scratch_database_url, "SELECT to_regclass('procrastinate_jobs')")
     seeded = fetch_all(scratch_database_url, "SELECT code FROM language ORDER BY id")
     extensions = fetch_all(scratch_database_url, "SELECT extname FROM pg_extension")
     command.downgrade(config, "base")
     table_after_downgrade = fetch_all(scratch_database_url, "SELECT to_regclass('language')")
     extensions_after_downgrade = fetch_all(scratch_database_url, "SELECT extname FROM pg_extension")
+    jobs_table_after_downgrade = fetch_all(
+        scratch_database_url, "SELECT to_regclass('procrastinate_jobs')"
+    )
     command.upgrade(config, "head")
 
+    assert jobs_table == [("procrastinate_jobs",)]
+    assert jobs_table_after_downgrade == [(None,)]
     assert seeded == [("en",), ("ru",)]
     assert {("vector",), ("pg_trgm",)} <= set(extensions)
     assert table_after_downgrade == [(None,)]

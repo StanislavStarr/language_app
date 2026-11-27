@@ -50,7 +50,7 @@ onboarding, пользователь сохранён в БД, CI зелёный
 
 > Итог: `core/database.py`, async Alembic, миграция 0001 (расширения, `language`, `en`/`ru`), модуль `languages`, `/ready`, транзакционные тесты на `vocabulary_test`. Отличия: `/ready` в `core/health.py` с кодом `database_unavailable` (503, внесён в ARCHITECTURE §7); `database_url` имеет локальное значение по умолчанию; `alembic/` добавлен в mypy.
 
-### T1.3 — Фоновые задачи на Procrastinate                       ~3 ч   [ ]
+### T1.3 — Фоновые задачи на Procrastinate                       ~3 ч   [x]
 
 **Цель:** очередь задач в Postgres и воркер внутри процесса API.
 **Контекст:** ARCHITECTURE.md §10; DECISIONS ADR-005; документация Procrastinate (применение
@@ -66,6 +66,8 @@ onboarding, пользователь сохранён в БД, CI зелёный
 **Приёмка:** отложенная `ping_job` выполняется воркером в процессе API (видно в логах);
 остановка сервера корректно гасит воркер.
 **Тесты:** задача ставится в очередь и выполняется в тестовом режиме.
+
+> Итог: `core/jobs.py` (`jobs_app`, `ping_job`, `run_jobs`, `requeue_stalled_jobs`), миграция 0002 со схемой Procrastinate, воркер в lifespan с graceful-остановкой (таймаут 30 с), фикстура `in_memory_jobs`, 6 тестов. Отличия: приложение называется `jobs_app` (путь CLI обновлён в ARCHITECTURE §10); версия procrastinate закреплена `==3.12.0`; зависшие задачи ищутся через `get_stalled_jobs(nb_seconds=900)` — параметр deprecated, при обновлении перейти на heartbeat. Не сделано: падение БД при старте блокирует запуск API (поведение не менялось).
 
 ### T1.4 — Вход по устройству и профиль                          ~4 ч   [ ]
 

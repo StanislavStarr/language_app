@@ -8,15 +8,20 @@ from app.core import health
 from app.core.config import get_settings
 from app.core.database import create_engine, create_session_factory
 from app.core.errors import ErrorResponse, register_error_handlers
+from app.core.jobs import jobs_app, run_jobs
 from app.core.logging import RequestContextMiddleware, configure_logging
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    engine = create_engine(get_settings().database_url)
+    settings = get_settings()
+    engine = create_engine(settings.database_url)
     app.state.session_factory = create_session_factory(engine)
-    yield
-    await engine.dispose()
+    try:
+        async with run_jobs(jobs_app, settings):
+            yield
+    finally:
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:
