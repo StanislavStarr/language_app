@@ -29,7 +29,8 @@
         }
       ],
       "expo-secure-store",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-font"
     ],
     "scheme": "english-reader"
   }

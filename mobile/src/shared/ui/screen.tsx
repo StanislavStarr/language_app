@@ -1,25 +1,31 @@
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useTheme } from './theme';
+import { SPACING, useTheme } from './theme';
 
 type Props = {
   children: ReactNode;
+  scrollable?: boolean;
 };
 
-export function Screen({ children }: Props) {
+export function Screen({ children, scrollable = false }: Props) {
   const { colors, spacing } = useTheme();
 
   return (
     <SafeAreaView
       style={[styles.screen, { backgroundColor: colors.background, padding: spacing.md }]}
     >
-      {children}
+      {scrollable ? (
+        <ScrollView contentContainerStyle={styles.scrollContent}>{children}</ScrollView>
+      ) : (
+        children
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  scrollContent: { gap: SPACING.md, paddingBottom: SPACING.xl },
 });
