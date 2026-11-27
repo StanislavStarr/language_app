@@ -104,13 +104,13 @@ rate limit отдаёт 429.
 
 > Итог: модуль `usage` (`daily_usage`, `UsageService.consume` с атомарным upsert, миграция 0004), `core/rate_limit.py` (скользящее окно, `Retry-After`, вытеснение устаревших ключей), `RateLimitedUser` применён к `/users/me`, лимиты в `Settings`, 14 новых тестов, включая конкурентный `consume`. Отличия: `AppError` получил необязательные заголовки; зависимость rate limit лежит в `auth/dependencies.py`, а не в `core`, чтобы `core` не зависел от модулей; квота не возвращается при сбое (ADR-013). `UsageServiceDep` пока никем не используется — его подключит T2.x.
 
-### T1.6 — CI для backend                                        ~1 ч   [~]
+### T1.6 — CI для backend                                        ~1 ч   [x]
 
 **Сделать:** `.github/workflows/backend.yml`: триггер на изменения `backend/**`; uv с кэшем;
 service container `pgvector/pgvector:pg17`; `ruff check`, `ruff format --check`, `mypy`, `pytest`.
 **Приёмка:** PR с ошибкой форматирования падает; чистый PR проходит.
 
-> Итог (ждёт первого прогона на GitHub): `.github/workflows/backend.yml` — триггеры на `backend/**`, `infra/postgres-init/**` и сам workflow; uv с кэшем; `pgvector/pgvector:pg17`; тестовая БД создаётся тем же скриптом, что и локально; `ruff check`, `ruff format --check`, `mypy`, `pytest`; версия Python закреплена в `backend/.python-version`. Шаги локально проходят без `.env`. Ограничение: из-за фильтра путей проверка не запускается на PR без изменений в `backend/`, поэтому её нельзя делать обязательной в branch protection. `.github/workflows/main.yml` — пустой файл, созданный через GitHub, невалиден; удалить или заполнить.
+> Итог: `.github/workflows/backend.yml` — триггеры на `backend/**`, `infra/postgres-init/**` и сам workflow; uv с кэшем; `pgvector/pgvector:pg17`; тестовая БД создаётся тем же скриптом, что и локально; `ruff check`, `ruff format --check`, `mypy`, `pytest`; версия Python закреплена в `backend/.python-version`. Шаги локально проходят без `.env`; первый прогон на GitHub зелёный. Ограничение: из-за фильтра путей проверка не запускается на PR без изменений в `backend/`, поэтому её нельзя делать обязательной в branch protection. `.github/workflows/main.yml` — пустой файл, созданный через GitHub, невалиден; удалить или заполнить.
 
 ## Mobile
 
