@@ -112,13 +112,14 @@ Dictionary, AI fallback, опечатка, кэш выбора значения 
 
 > Итог: модули `vocabulary` и `collections`, миграция 0007 (уникальность имени темы без учёта регистра — функциональный индекс), эндпоинты §7 без `book`-варианта `POST /vocabulary`. Дубликат → 409 с `vocabulary_item_id` (upsert с `xmax`), список — курсор по (`created_at`, `id`), карточка батчем через `MeaningCatalog` (4 запроса на страницу), `GET /vocabulary/forms` = лексема + формы + неправильные глаголы, `user_meaning_ids` в lookup заполняется. Отклонения: `defer enrich_vocabulary_item` перенесён в T2.9 вместе с задачей (согласовано); фильтр по чужой теме даёт 404; повторное удаление из темы идемпотентно (204).
 
-### T2.9 — Подготовка карточки (enrichment)                      ~3 ч   [ ]
+### T2.9 — Подготовка карточки (enrichment)                      ~3 ч   [x]
 
 **Контекст:** ARCHITECTURE.md §6.3.
 **Сделать:** модуль `enrichment`: сервис + задача `enrich_vocabulary_item`; перевод при отсутствии;
 `meaning_content` с `pg_advisory_xact_lock`; статусы `ready`/`partial`/`failed`; ретраи.
 **Тесты:** готовая карточка; частичная (AI упал на определении); повторный запуск идемпотентен;
 два элемента с одним значением → один вызов генерации.
+> Итог: модуль `enrichment` (сервис, задача `enrich_vocabulary_item`, `EnrichmentScheduler`, runtime в ContextVar — ADR-016) и `MeaningContentService` в лексиконе (перевод и `meaning_content` под `pg_advisory_xact_lock`, повторное использование готового контента). `POST /vocabulary` ставит задачу после commit; статусы `ready`/`partial`/`failed`, временные сбои AI повторяются Procrastinate (до 3 повторов; Procrastinate повторяет, пока `attempts < max_attempts`), на последнем запуске, в том числе при неожиданной ошибке, карточка получает итоговый статус. Отклонения: отдельный процесс воркера не поддерживается (DEVELOPMENT.md); неудачный контент не сохраняется; enrichment не тратит `ai_lookup`. Не покрыто тестом: настоящая конкурентность блокировки и порядок установки runtime в lifespan.
 
 ### T2.10 — Каркас evals и первые наборы                          ~3 ч   [ ]
 

@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +32,10 @@ from app.modules.vocabulary.schemas import (
 )
 
 
+class EnrichmentScheduling(Protocol):
+    async def schedule(self, item_id: UUID) -> None: ...
+
+
 class VocabularyService:
     def __init__(
         self,
@@ -38,11 +43,13 @@ class VocabularyService:
         repository: VocabularyRepository,
         collections: CollectionService,
         catalog: MeaningCatalog,
+        scheduler: EnrichmentScheduling,
     ) -> None:
         self._session = session
         self._repository = repository
         self._collections = collections
         self._catalog = catalog
+        self._scheduler = scheduler
 
     async def add_item(self, user: User, payload: ManualVocabularyCreate) -> VocabularyItemResponse:
         await self._catalog.require_meaning(payload.meaning_id)
@@ -60,6 +67,7 @@ class VocabularyService:
             raise AlreadyInVocabularyError(item.id)
         await self._collections.join_collections(item.id, collection_ids)
         await self._session.commit()
+        await self._scheduler.schedule(item.id)
         return (await self._responses(user, [item]))[0]
 
     async def get_item(self, user: User, item_id: UUID) -> VocabularyItemResponse:

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.modules.languages.enums import CefrLevel
 from app.modules.lexicon.enums import MeaningContentStatus
@@ -7,6 +7,7 @@ from app.modules.lexicon.models import MeaningContent
 from app.modules.vocabulary.models import UserVocabularyItem
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.fakes.scheduler import RecordingScheduler
 from tests.modules.vocabulary.vocabulary_api import (
     VOCABULARY_URL,
     create_collection,
@@ -202,3 +203,25 @@ async def test_every_endpoint_requires_authentication(client: AsyncClient) -> No
     assert (await client.get(VOCABULARY_URL)).status_code == 401
     assert (await client.post(VOCABULARY_URL, json={})).status_code == 401
     assert (await client.get(f"{VOCABULARY_URL}/forms")).status_code == 401
+
+
+async def test_saving_schedules_enrichment_once_for_the_new_item(
+    client: AsyncClient, db_session: AsyncSession, scheduler: RecordingScheduler
+) -> None:
+    headers = await new_headers(client)
+    meaning_id = await new_meaning_id(db_session, "bank")
+
+    created = await save(client, headers, meaning_id)
+    await save(client, headers, meaning_id)
+
+    assert scheduler.scheduled == [UUID(created.json()["id"])]
+
+
+async def test_failed_saves_do_not_schedule_enrichment(
+    client: AsyncClient, scheduler: RecordingScheduler
+) -> None:
+    headers = await new_headers(client)
+
+    await save(client, headers, 999_999)
+
+    assert scheduler.scheduled == []

@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.modules.languages.exceptions import LanguageNotFoundError
 from app.modules.languages.models import Language
 from app.modules.languages.repository import LanguageRepository
@@ -17,3 +19,7 @@ class LanguageService:
         if language is None:
             raise LanguageNotFoundError(code)
         return language
+
+
+def build_language_service(session: AsyncSession) -> LanguageService:
+    return LanguageService(LanguageRepository(session))

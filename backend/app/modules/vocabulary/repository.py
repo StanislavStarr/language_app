@@ -55,6 +55,9 @@ class VocabularyRepository:
         item = await self._session.get_one(UserVocabularyItem, item_id)
         return item, bool(created)
 
+    async def get(self, item_id: UUID) -> UserVocabularyItem | None:
+        return await self._session.get(UserVocabularyItem, item_id)
+
     async def get_owned(self, item_id: UUID, user_id: UUID) -> UserVocabularyItem | None:
         return await self._session.scalar(
             select(UserVocabularyItem).where(

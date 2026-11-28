@@ -1,16 +1,19 @@
 from collections.abc import Sequence
 
 from app.integrations.ai.provider import AIProvider, SenseCandidate, TranslateMeaningsRequest
-from app.modules.lexicon.ai_calls import call_with_one_retry
+from app.modules.lexicon.ai_calls import call_unless_unavailable, call_with_one_retry
 from app.modules.lexicon.enums import TranslationSource
 from app.modules.lexicon.models import Lexeme, Meaning
 from app.modules.lexicon.repository import LexemeRepository, NewTranslation
 
 
 class MeaningTranslator:
-    def __init__(self, repository: LexemeRepository, russian_id: int) -> None:
+    def __init__(
+        self, repository: LexemeRepository, russian_id: int, *, raise_when_unavailable: bool = False
+    ) -> None:
         self._repository = repository
         self._russian_id = russian_id
+        self._call = call_unless_unavailable if raise_when_unavailable else call_with_one_retry
 
     async def translate(
         self, provider: AIProvider, lexeme: Lexeme, meanings: Sequence[Meaning]
@@ -24,7 +27,7 @@ class MeaningTranslator:
                 for meaning in meanings
             ),
         )
-        result = await call_with_one_retry(
+        result = await self._call(
             "translate_meanings", lambda: provider.translate_meanings(request)
         )
         if result is None:

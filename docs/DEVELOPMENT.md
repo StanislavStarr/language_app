@@ -64,8 +64,8 @@ API на телефоне доступен по LAN-IP компьютера, н�
 
 - По умолчанию воркер Procrastinate работает внутри API (`JOBS_RUN_IN_PROCESS=true`,
   `JOBS_WORKER_CONCURRENCY=2` в `backend/.env`).
-- Отдельный воркер: `cd backend && uv run procrastinate --app=app.core.jobs.jobs_app worker`
-  (в `.env` указать `JOBS_RUN_IN_PROCESS=false`).
+- Отдельный процесс воркера пока не поддерживается: задачам нужен runtime с сессией БД и
+  AI-провайдером, который собирается только в lifespan API (ADR-016).
 - Схема Procrastinate ставится миграцией 0002; версия библиотеки закреплена точно, при её
   обновлении добавляется новая ревизия Alembic.
 

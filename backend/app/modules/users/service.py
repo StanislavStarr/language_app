@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.languages.service import LanguageService
+from app.modules.languages.service import LanguageService, build_language_service
 from app.modules.users.constants import (
     DEFAULT_ANSWER_LANGUAGE,
     DEFAULT_CEFR_LEVEL,
@@ -53,3 +53,7 @@ class UserService:
         await self._session.commit()
         await self._session.refresh(user)
         return user
+
+
+def build_user_service(session: AsyncSession) -> UserService:
+    return UserService(session, UserRepository(session), build_language_service(session))

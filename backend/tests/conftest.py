@@ -7,6 +7,7 @@ from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.jobs import jobs_app
 from app.main import create_app
+from app.modules.vocabulary.dependencies import get_enrichment_scheduler
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from procrastinate import App
@@ -14,6 +15,8 @@ from procrastinate.testing import InMemoryConnector
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
+
+from tests.fakes.scheduler import RecordingScheduler
 
 TEST_DATABASE_NAME = "vocabulary_test"
 
@@ -51,8 +54,14 @@ async def db_session(test_database_url: str) -> AsyncIterator[AsyncSession]:
 
 
 @pytest.fixture
-def app(db_session: AsyncSession) -> FastAPI:
+def scheduler() -> RecordingScheduler:
+    return RecordingScheduler()
+
+
+@pytest.fixture
+def app(db_session: AsyncSession, scheduler: RecordingScheduler) -> FastAPI:
     application = create_app()
+    application.dependency_overrides[get_enrichment_scheduler] = lambda: scheduler
 
     async def override_session() -> AsyncIterator[AsyncSession]:
         yield db_session
