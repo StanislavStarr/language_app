@@ -1,66 +1,21 @@
-import re
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
-
-RUSSIAN = "ru"
-MAX_MEANINGS_PER_POS = 8
-MIN_LABEL_TOKEN_LENGTH = 3
-JUNK_FORM_TAGS = frozenset({"table-tags", "inflection-template", "class"})
-JUNK_FORMS = frozenset({"no-table-tags"})
-PARTICLES = frozenset(
-    {"up", "down", "out", "off", "on", "in", "over", "away", "back", "around", "through", "along"}
+from scripts.wiktextract import (
+    MAX_MEANINGS_PER_POS,
+    NAME_POS,
+    PLAIN_WORD,
+    US_IPA_TAGS,
+    Entry,
+    PhraseKind,
+    is_form_sense,
+    label_matches_gloss,
+    lemma_senses,
+    phrase_kind,
+    phrase_max_rank,
+    russian_translations,
+    usable_forms,
 )
-PHRASE_POS = frozenset({"phrase", "proverb", "prep_phrase", "adv_phrase", "intj", "contraction"})
-US_IPA_TAGS = frozenset({"US", "General-American"})
-TOKEN_PATTERN = re.compile(r"[a-z0-9']+")
-PLAIN_WORD = re.compile(r"^[a-z]+$")
-NAME_POS = "name"
-
-type PhraseKind = Literal["phrasal_verb", "idiom", "phrase", "other"]
-
-
-class WiktextractModel(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-
-class FormOf(WiktextractModel):
-    word: str = ""
-
-
-class Sense(WiktextractModel):
-    glosses: list[str] = Field(default_factory=list)
-    tags: list[str] = Field(default_factory=list)
-    form_of: list[FormOf] = Field(default_factory=list)
-
-
-class Form(WiktextractModel):
-    form: str = ""
-    tags: list[str] = Field(default_factory=list)
-
-
-class Sound(WiktextractModel):
-    ipa: str | None = None
-    mp3_url: str | None = None
-    tags: list[str] = Field(default_factory=list)
-
-
-class Translation(WiktextractModel):
-    lang_code: str = ""
-    word: str = ""
-    sense: str = ""
-
-
-class Entry(WiktextractModel):
-    word: str
-    lang_code: str = ""
-    pos: str = ""
-    senses: list[Sense] = Field(default_factory=list)
-    forms: list[Form] = Field(default_factory=list)
-    sounds: list[Sound] = Field(default_factory=list)
-    translations: list[Translation] = Field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,29 +61,6 @@ class Collected:
     name_entries: int = 0
 
 
-def tokens(text: str) -> list[str]:
-    return TOKEN_PATTERN.findall(text.lower())
-
-
-def is_form_sense(sense: Sense) -> bool:
-    return bool(sense.form_of) or "form-of" in sense.tags
-
-
-def label_matches_gloss(label: str, gloss: str) -> bool:
-    label_tokens = {token for token in tokens(label) if len(token) >= MIN_LABEL_TOKEN_LENGTH}
-    if not label_tokens:
-        return False
-    return label_tokens <= set(tokens(gloss))
-
-
-def russian_translations(entry: Entry) -> list[Translation]:
-    return [item for item in entry.translations if item.lang_code == RUSSIAN and item.word]
-
-
-def lemma_senses(entry: Entry) -> list[Sense]:
-    return [sense for sense in entry.senses if sense.glosses and not is_form_sense(sense)]
-
-
 def meaning_records(entry: Entry) -> tuple[list[MeaningRecord], int, int]:
     translations = russian_translations(entry)
     labels = {item.sense for item in translations if item.sense}
@@ -140,36 +72,6 @@ def meaning_records(entry: Entry) -> tuple[list[MeaningRecord], int, int]:
         linked_labels |= matched
         records.append(MeaningRecord(entry.pos, len(gloss.encode()), bool(matched)))
     return records, len(labels), len(linked_labels)
-
-
-def phrase_kind(entry: Entry) -> PhraseKind:
-    parts = entry.word.lower().split()
-    is_idiomatic = any("idiomatic" in sense.tags for sense in entry.senses)
-    if entry.pos == "verb" and parts[-1] in PARTICLES:
-        return "phrasal_verb"
-    if is_idiomatic:
-        return "idiom"
-    if entry.pos in PHRASE_POS:
-        return "phrase"
-    return "other"
-
-
-def phrase_max_rank(word: str, ranks: dict[str, int]) -> int | None:
-    token_ranks = [ranks.get(token) for token in tokens(word)]
-    if not token_ranks or any(rank is None for rank in token_ranks):
-        return None
-    return max(rank for rank in token_ranks if rank is not None)
-
-
-def usable_forms(entry: Entry) -> set[str]:
-    return {
-        item.form.lower()
-        for item in entry.forms
-        if item.form
-        and item.form not in JUNK_FORMS
-        and JUNK_FORM_TAGS.isdisjoint(item.tags)
-        and item.form.lower() != entry.word.lower()
-    }
 
 
 def add_phrase(collected: Collected, entry: Entry) -> None:

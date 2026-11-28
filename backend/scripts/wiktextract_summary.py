@@ -1,6 +1,7 @@
 from dataclasses import asdict, dataclass
 
-from scripts.wiktextract_stats import PLAIN_WORD, Collected, PhraseRecord, capped_meanings
+from scripts.wiktextract import PLAIN_WORD
+from scripts.wiktextract_stats import Collected, PhraseRecord, capped_meanings
 
 ROW_OVERHEAD_BYTES = 48
 BTREE_ENTRY_OVERHEAD_BYTES = 16

@@ -1,43 +1,20 @@
 import argparse
-import gzip
 import json
 import sys
-from collections.abc import Iterator
 from pathlib import Path
-from typing import TextIO
 
 from pydantic import ValidationError
-from wordfreq import top_n_list, word_frequency
+from wordfreq import word_frequency
 
-from scripts.wiktextract_stats import Collected, Entry, collect_entry
+from scripts.wiktextract import ENGLISH_MARKER, Entry, build_ranks, read_lines
+from scripts.wiktextract_stats import Collected, collect_entry
 from scripts.wiktextract_summary import summarize
 
-DEFAULT_INPUT = Path("data/kaikki/kaikki.org-dictionary-English.jsonl")
-DEFAULT_OUTPUT = Path("data/kaikki/exploration-stats.json")
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_INPUT = REPOSITORY_ROOT / "data/kaikki/raw-wiktextract-data.jsonl.gz"
+DEFAULT_OUTPUT = REPOSITORY_ROOT / "data/kaikki/exploration-stats-raw.json"
 TOP_NS = (30_000, 60_000, 100_000)
 PROGRESS_EVERY = 200_000
-ENGLISH_MARKER = '"lang_code": "en"'
-
-
-def open_text(path: Path) -> TextIO:
-    if path.suffix == ".gz":
-        return gzip.open(path, "rt", encoding="utf-8")
-    return path.open(encoding="utf-8")
-
-
-def read_lines(path: Path, max_lines: int | None) -> Iterator[str]:
-    with open_text(path) as source:
-        for index, line in enumerate(source):
-            if max_lines is not None and index >= max_lines:
-                return
-            yield line
-
-
-def build_ranks(top_n: int) -> dict[str, int]:
-    ranks: dict[str, int] = {}
-    for rank, word in enumerate(top_n_list("en", top_n), start=1):
-        ranks.setdefault(word.lower(), rank)
-    return ranks
 
 
 def explore(path: Path, max_lines: int | None = None, progress: bool = False) -> Collected:

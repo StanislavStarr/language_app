@@ -62,7 +62,16 @@ class LexemeForm(Base):
 
 class Meaning(Base):
     __tablename__ = "meaning"
-    __table_args__ = (Index("ix_meaning_lexeme_id_sense_order", "lexeme_id", "sense_order"),)
+    __table_args__ = (
+        Index("ix_meaning_lexeme_id_sense_order", "lexeme_id", "sense_order"),
+        Index(
+            "uq_meaning_lexeme_id_source_external_id",
+            "lexeme_id",
+            "source_external_id",
+            unique=True,
+            postgresql_where=text("source_external_id IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     lexeme_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("lexeme.id", ondelete="CASCADE"))

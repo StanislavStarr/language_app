@@ -3,15 +3,9 @@ import json
 from pathlib import Path
 
 import pytest
-from scripts.explore_wiktextract import build_ranks, explore
-from scripts.wiktextract_stats import (
-    PLAIN_WORD,
-    Collected,
-    Entry,
-    capped_meanings,
-    label_matches_gloss,
-    phrase_kind,
-)
+from scripts.explore_wiktextract import explore
+from scripts.wiktextract import PLAIN_WORD, Entry, build_ranks, label_matches_gloss, phrase_kind
+from scripts.wiktextract_stats import Collected, capped_meanings
 from scripts.wiktextract_summary import coverage_row, phrase_rows
 
 TOP_N = 30_000
