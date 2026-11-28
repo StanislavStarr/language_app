@@ -58,7 +58,11 @@ API на телефоне доступен по LAN-IP компьютера, н�
 
 ## Evals (платные вызовы OpenAI)
 
-`cd backend && uv run python -m evals run <suite>`
+`cd backend && uv run python -m evals run <suite> [--limit N]`, наборы `sense_selection` и `meaning_content`.
+Отчёт пишется в `docs/evals/<набор>-<дата>.md` (повторный прогон в тот же день перезаписывает файл).
+Необязательные переменные в `backend/.env`: `EVAL_JUDGE_MODEL` (модель judge, по умолчанию
+`OPENAI_MODEL`), `EVAL_INPUT_PRICE_PER_MILLION` и `EVAL_OUTPUT_PRICE_PER_MILLION` (цены за миллион
+токенов; без обеих цен стоимость в отчёте не считается). Прогон на полном наборе — десятки тысяч токенов.
 
 ## Фоновые задачи
 

@@ -121,7 +121,7 @@ Dictionary, AI fallback, опечатка, кэш выбора значения 
 два элемента с одним значением → один вызов генерации.
 > Итог: модуль `enrichment` (сервис, задача `enrich_vocabulary_item`, `EnrichmentScheduler`, runtime в ContextVar — ADR-016) и `MeaningContentService` в лексиконе (перевод и `meaning_content` под `pg_advisory_xact_lock`, повторное использование готового контента). `POST /vocabulary` ставит задачу после commit; статусы `ready`/`partial`/`failed`, временные сбои AI повторяются Procrastinate (до 3 повторов; Procrastinate повторяет, пока `attempts < max_attempts`), на последнем запуске, в том числе при неожиданной ошибке, карточка получает итоговый статус. Отклонения: отдельный процесс воркера не поддерживается (DEVELOPMENT.md); неудачный контент не сохраняется; enrichment не тратит `ai_lookup`. Не покрыто тестом: настоящая конкурентность блокировки и порядок установки runtime в lifespan.
 
-### T2.10 — Каркас evals и первые наборы                          ~3 ч   [ ]
+### T2.10 — Каркас evals и первые наборы                          ~3 ч   [x]
 
 **Контекст:** ARCHITECTURE.md §9 (Evals); skill `llm-feature`; subagent `eval-analyst`.
 **Сделать:** пакет `backend/evals/` (раннер, отчёт в markdown, judge); наборы
@@ -130,6 +130,7 @@ Dictionary, AI fallback, опечатка, кэш выбора значения 
 и judge для `meaning_content`; базовые отчёты в `docs/evals/`.
 **Приёмка:** `uv run python -m evals run sense_selection` печатает метрики и пишет отчёт; есть
 два отчёта.
+> Итог: пакет `backend/evals/` (раннер, отчёт в markdown, judge на структурированном выводе, `EVAL_JUDGE_MODEL` и цены — необязательные переменные), наборы `sense_selection` (40 кейсов, 10 «нет подходящего значения») и `meaning_content` (30 значений × A2/B2), базовые отчёты на `gpt-4o-mini` от 2026-11-28 в `docs/evals/`. Результат: `sense_selection` accuracy 0,750 (цель 0,85): на кейсах с ответом 0,967, а 9 из 10 кейсов «нет значения» заканчиваются `AIInvalidOutputError`; `meaning_content` 0,833 (цель 0,9): нарушения правил 4 из 60, замечания judge 6 из 56. Обе цели пока не достигнуты — правки промптов вне T2.10 (backlog). Правила `meaning_content` — это проверки провайдера (`check_meaning_content`), сбой сети считается отдельно. Evals вызывают провайдера напрямую, без повтора, который делает сервис.
 
 ## Mobile
 
