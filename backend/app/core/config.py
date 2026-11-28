@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     daily_limit_book_question: int = Field(default=30, ge=1)
     daily_limit_book_upload: int = Field(default=5, ge=1)
     rate_limit_per_minute: int = Field(default=60, ge=1)
+    openai_api_key: SecretStr | None = None
+    openai_model: str | None = None
     jobs_run_in_process: bool = True
     jobs_worker_concurrency: int = Field(default=2, ge=1)
 

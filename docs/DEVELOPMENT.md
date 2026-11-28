@@ -80,3 +80,9 @@ API на телефоне доступен по LAN-IP компьютера, н�
 - Скрипты: `npm run typecheck | lint | lint:fsd | test | format`; всё сразу — `make mobile-check`.
 - Зависимости с нативной частью — только через `npx expo install` и только из Expo Go (ADR-002).
 
+## AI
+
+- В `backend/.env`: `OPENAI_API_KEY` и `OPENAI_MODEL` (например, `gpt-4o-mini`).
+- Ручная проверка всех AI-функций на реальном API: `cd backend && uv run python -m scripts.ai_smoke`.
+  Скрипт делает около 7 платных запросов (порядка нескольких центов) и в CI не запускается.
+
