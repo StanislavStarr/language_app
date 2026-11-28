@@ -4,8 +4,8 @@ from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 
+from app.integrations.nlp.normalization import normalize_text
 from app.modules.lexicon.enums import LexemeType, PartOfSpeech
-from app.modules.lexicon.normalization import normalize_lexeme_text
 
 from scripts.lexicon_collector import DraftCollector
 from scripts.wiktextract import (
@@ -151,7 +151,7 @@ def entry_forms(entry: Entry) -> dict[str, set[str]]:
     for item in entry.forms:
         if not item.form or item.form in JUNK_FORMS or not JUNK_FORM_TAGS.isdisjoint(item.tags):
             continue
-        form = normalize_lexeme_text(item.form)
+        form = normalize_text(item.form)
         if LETTER.search(form):
             forms.setdefault(form, set()).update(item.tags)
     return forms

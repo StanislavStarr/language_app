@@ -76,7 +76,7 @@ language_app/
 | БД | PostgreSQL 17, SQLAlchemy 2.x async + `psycopg` 3 (один драйвер и для ORM, и для Procrastinate), Alembic |
 | Расширения БД | `vector` (pgvector), `pg_trgm`, встроенный FTS (`tsvector`) |
 | Фоновые задачи | Procrastinate (очередь в PostgreSQL), воркер в процессе API |
-| NLP | spaCy `en_core_web_sm` — лемматизация, части речи, деление на предложения |
+| NLP | spaCy `en_core_web_sm` (закреплён wheel-ссылкой в `pyproject.toml`) — лемматизация, части речи, деление на предложения; пайплайн без парсера и NER (`senter` для границ предложений) |
 | Парсинг книг | `ebooklib` (EPUB), `defusedxml` + `lxml` (FB2, XHTML), `selectolax` (HTML → текст), `charset-normalizer` (TXT) |
 | AI | OpenAI Python SDK: Responses API со structured outputs, Embeddings (`text-embedding-3-small`, 512 измерений). Имя модели — только из настроек |
 | HTTP-клиент | `httpx` с таймаутами |
@@ -135,7 +135,7 @@ backend/app/
     ├── ai/                  # AIProvider protocol, OpenAI, промпты по фичам с версиями
     ├── embeddings/          # EmbeddingProvider protocol, OpenAI
     ├── dictionary/          # FreeDictionaryProvider (fallback)
-    └── nlp/                 # обёртка spaCy: lemmatize_in_context, split_sentences
+    └── nlp/                 # TextAnalyzer (spaCy): split_sentences, lemma_candidates, normalize_text
 ```
 
 Типовой модуль: `router.py`, `schemas.py`, `models.py`, `repository.py`, `service.py`,
@@ -249,6 +249,12 @@ kaikki.org raw Wiktextract JSONL (.gz) ──► scripts/import_lexicon.py
 `id` значений сохраняются. Импорт только добавляет и обновляет: устаревшие значения и формы не
 удаляются (ADR-014).
 
+Память на Render (512 МБ): приложение ≈ 82 МБ, с импортом spaCy ≈ 125 МБ, с загруженной моделью
+≈ 150–180 МБ. Пик при `split_sentences` растёт с размером текста: 5 000 символов — 157 МБ, 20 000 —
+225 МБ, 50 000 — 322 МБ, 100 000 — 548 МБ (больше лимита). Поэтому текст разбивается по абзацам и
+главам: лимиты `MAX_TEXT_LENGTH` = 20 000 символов для `split_sentences` и `MAX_SENTENCE_LENGTH` =
+2 000 для `lemma_candidates`.
+
 Запускается с машины разработчика против Neon (`DATABASE_URL`), не на Render: там 512 МБ памяти.
 Отчёт импорта: сколько лемм, доля значений с русским переводом, размер таблиц. Цель — лексикон
 не больше 300 МБ. Атрибуция Wiktionary (CC BY-SA) — на экране «О приложении».
@@ -314,7 +320,7 @@ job parse_book:
            иначе куски по ~3000 слов
   2. нормализация: пробелы, переносы строк внутри абзаца, пустые абзацы, мусор (номера страниц)
   3. проверка языка: доля английских стоп-слов ≥ порога, иначе failed(not_english)
-  4. sentence_spans для каждого абзаца (spaCy sentencizer)
+  4. sentence_spans для каждого абзаца (spaCy `senter`, текст не длиннее 20 000 символов за вызов)
   5. insert chapters + paragraphs батчами; счётчики; удалить book_upload
   6. статус indexing → defer index_book
 

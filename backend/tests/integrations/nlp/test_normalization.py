@@ -1,5 +1,5 @@
 import pytest
-from app.modules.lexicon.normalization import normalize_lexeme_text
+from app.integrations.nlp.normalization import normalize_text
 
 
 @pytest.mark.parametrize(
@@ -13,11 +13,11 @@ from app.modules.lexicon.normalization import normalize_lexeme_text
         ("", ""),
     ],
 )
-def test_normalize_lexeme_text(raw: str, expected: str) -> None:
-    assert normalize_lexeme_text(raw) == expected
+def test_normalize_text(raw: str, expected: str) -> None:
+    assert normalize_text(raw) == expected
 
 
 def test_normalization_is_idempotent() -> None:
-    once = normalize_lexeme_text("  Don\u2019t   Stop ")
+    once = normalize_text("  Don\u2019t   Stop ")
 
-    assert normalize_lexeme_text(once) == once
+    assert normalize_text(once) == once

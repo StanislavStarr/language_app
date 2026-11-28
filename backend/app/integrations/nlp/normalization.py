@@ -7,6 +7,6 @@ TYPOGRAPHIC_APOSTROPHES = str.maketrans(
 WHITESPACE = re.compile(r"\s+")
 
 
-def normalize_lexeme_text(text: str) -> str:
+def normalize_text(text: str) -> str:
     unified = unicodedata.normalize("NFC", text).translate(TYPOGRAPHIC_APOSTROPHES)
     return WHITESPACE.sub(" ", unified.strip()).lower()

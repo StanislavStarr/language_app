@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from app.integrations.nlp.normalization import normalize_text
 from app.modules.lexicon.enums import LexemeType
-from app.modules.lexicon.normalization import normalize_lexeme_text
 from pydantic import ValidationError
 
 from scripts.wiktextract import (
@@ -37,7 +37,7 @@ def inflection_targets(entry: Entry) -> tuple[set[str], set[str]] | None:
     if not entry.senses or not all(is_form_sense(sense) for sense in entry.senses):
         return None
     targets = {
-        normalize_lexeme_text(target.word)
+        normalize_text(target.word)
         for sense in entry.senses
         for target in sense.form_of
         if target.word
@@ -47,7 +47,7 @@ def inflection_targets(entry: Entry) -> tuple[set[str], set[str]] | None:
 
 
 def add_word(collector: DraftCollector, entry: Entry) -> None:
-    key = normalize_lexeme_text(entry.word)
+    key = normalize_text(entry.word)
     if key not in collector.ranks or not PLAIN_WORD.match(key):
         return
     if lemma_senses(entry):
@@ -70,7 +70,7 @@ def add_phrase(collector: DraftCollector, entry: Entry) -> None:
         and bool(lemma_senses(entry))
     )
     if is_importable:
-        key = normalize_lexeme_text(entry.word)
+        key = normalize_text(entry.word)
         collector.sources.setdefault(key, LexemeSource(LexemeType.PHRASE, None)).entries.append(
             entry
         )
