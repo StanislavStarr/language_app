@@ -193,6 +193,10 @@ jobs (Procrastinate) → service
 
 `enrichment_status`: `pending` → `enriching` → `ready` \| `partial` \| `failed`.
 
+`book_id` и `paragraph_id` — обычные колонки без внешних ключей до появления таблиц книг (T3.x).
+Системные коллекции (`is_system`, `user_id` NULL) пока не создаются. Число коллекций у пользователя
+ограничено (50).
+
 ### 5.4. Книги
 
 | Таблица | Поля | Ограничения и индексы |
@@ -297,6 +301,13 @@ AI-шаги 7–9 одного запроса учитываются одной 
 
 ### 6.3. Сохранение слова и подготовка карточки
 
+В T2.8 реализован только первый шаг (`POST /vocabulary` создаёт элемент в статусе `pending` и
+привязывает его к темам); постановка задачи `enrich_vocabulary_item` после commit добавляется в T2.9
+вместе с самой задачей. Карточка (`GET /vocabulary/{id}`, список) собирается батчем: элементы,
+значения/леммы/переводы/`meaning_content` через `MeaningCatalog` и темы — константное число запросов.
+`GET /vocabulary/forms` отдаёт плоский отсортированный список нормализованных форм: сама лексема,
+`lexeme_form` и формы неправильных глаголов.
+
 ```text
 POST /vocabulary {meaning_id, collection_ids, source, context_translation?}
   → транзакция: user_vocabulary_item (pending) + collection_item
@@ -392,7 +403,7 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
 | Users | `GET /users/me`, `PATCH /users/me`, `DELETE /users/me` |
 | Languages | `GET /languages` |
 | Lexemes | `POST /lexemes/lookup`, `GET /lexemes/{id}/meanings?offset=`, `POST /lexemes/{id}/ai-meanings` |
-| Vocabulary | `GET /vocabulary?collection_id=&book_id=&cursor=`, `POST /vocabulary`, `GET/PATCH/DELETE /vocabulary/{id}`, `GET /vocabulary/forms` |
+| Vocabulary | `GET /vocabulary?collection_id=&book_id=&cursor=&limit=`, `POST /vocabulary`, `GET/PATCH/DELETE /vocabulary/{id}`, `GET /vocabulary/forms` |
 | Collections | `GET/POST /collections`, `GET/PATCH/DELETE /collections/{id}`, `POST /collections/{id}/items`, `DELETE /collections/{id}/items/{item_id}` |
 | Books | `GET /books`, `POST /books`, `GET /books/{id}`, `DELETE /books/{id}`, `GET /books/{id}/toc`, `GET /books/{id}/chapters/{chapter_index}`, `PUT /books/{id}/progress` |
 | Book QA | `POST /books/{id}/questions`, `GET /books/{id}/questions` |
@@ -408,7 +419,10 @@ POST /books/{id}/questions {question (≤ 300), answer_language}
   `validation_error` (422), `not_found` (404), `method_not_allowed` (405), `http_error`
   (прочие HTTP-ошибки фреймворка), `internal_error` (500), `database_unavailable` (503).
   Auth: `invalid_device_credentials`, `token_missing`, `token_invalid`, `token_expired` (все 401).
-  Справочники: `language_not_found` (404). Лимиты: `usage_limit_exceeded` (429, `details`: `kind`,
+  Справочники: `language_not_found` (404). Лексикон: `lexeme_not_found`, `meaning_not_found` (404),
+  `ai_temporarily_unavailable` (503). Словарь: `vocabulary_item_not_found` (404),
+  `already_in_vocabulary` (409, `details.vocabulary_item_id`), `invalid_cursor` (422).
+  Темы: `collection_not_found` (404), `collection_name_taken`, `collection_limit_reached` (409). Лимиты: `usage_limit_exceeded` (429, `details`: `kind`,
   `limit`, `resets_at`), `rate_limited` (429, заголовок `Retry-After`).
 - Пагинация списков — курсором (`cursor`, `next_cursor`).
 - Схема OpenAPI — источник типов для клиента (`mobile/src/shared/api/schema.d.ts` генерируется).

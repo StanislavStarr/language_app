@@ -141,3 +141,26 @@ async def test_page_size_is_bounded(client: AsyncClient) -> None:
     response = await client.get("/api/v1/lexemes/1/meanings?limit=21", headers=bearer(token))
 
     assert response.status_code == 422
+
+
+async def test_meanings_already_in_the_vocabulary_are_marked(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    bank = await create_lexeme(db_session, "bank")
+    saved = await create_meaning(db_session, bank, "Money.", 1, translations={"ru": ["банк"]})
+    await create_meaning(db_session, bank, "River.", 2, translations={"ru": ["вал"]})
+    token = await sign_in_new_device(client)
+    headers = bearer(token)
+    other_token = await sign_in_new_device(client)
+    saved_body = {"source": "manual", "meaning_id": saved.id}
+    await client.post("/api/v1/vocabulary", json=saved_body, headers=headers)
+    await client.post("/api/v1/vocabulary", json=saved_body, headers=bearer(other_token))
+    look = {"source": "manual", "text": "bank"}
+
+    mine = (await client.post(LOOKUP_URL, json=look, headers=headers)).json()
+    fresh = (
+        await client.post(LOOKUP_URL, json=look, headers=bearer(await sign_in_new_device(client)))
+    ).json()
+
+    assert mine["user_meaning_ids"] == [saved.id]
+    assert fresh["user_meaning_ids"] == []

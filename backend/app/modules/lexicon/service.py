@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,7 @@ from app.modules.lexicon.exceptions import AiTemporarilyUnavailableError, Lexeme
 from app.modules.lexicon.lexeme_sources import LexemeSources, limited, meaning_key
 from app.modules.lexicon.lookup_target import LookupTarget, build_target
 from app.modules.lexicon.meaning_translator import MeaningTranslator
+from app.modules.lexicon.meaning_views import recommended_first, to_meaning_response
 from app.modules.lexicon.models import Lexeme, Meaning
 from app.modules.lexicon.part_of_speech import to_part_of_speech
 from app.modules.lexicon.repository import LexemeMatch, LexemeRepository, NewMeaning
@@ -27,7 +29,6 @@ from app.modules.lexicon.schemas import (
     ManualLookup,
     MeaningResponse,
     MeaningsPage,
-    RecommendedMeaning,
 )
 from app.modules.lexicon.sense_choice import SenseChooser
 from app.modules.usage.enums import UsageKind
@@ -37,30 +38,22 @@ TYPO_SIMILARITY_THRESHOLD = 0.45
 MAX_LEXEME_MEANINGS = 50
 
 
+class SavedMeanings(Protocol):
+    async def saved_meaning_ids(self, user_id: UUID, meaning_ids: Sequence[int]) -> set[int]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class LookupCollaborators:
+    usage: UsageService
+    languages: LanguageService
+    saved: SavedMeanings
+
+
 @dataclass(frozen=True, slots=True)
 class LexiconProviders:
     analyzer: TextAnalyzer
     dictionary: DictionaryProvider
     ai: AIProvider | None
-
-
-def to_meaning_response(meaning: Meaning, extra: Sequence[str] = ()) -> MeaningResponse:
-    texts = [translation.text for translation in meaning.translations]
-    return MeaningResponse(
-        id=meaning.id,
-        part_of_speech=meaning.part_of_speech,
-        gloss=meaning.gloss,
-        translations=[*texts, *(text for text in extra if text not in texts)],
-    )
-
-
-def recommended_first(
-    meanings: Sequence[Meaning], recommended: RecommendedMeaning | None
-) -> list[Meaning]:
-    if recommended is None:
-        return list(meanings)
-    first = [meaning for meaning in meanings if meaning.id == recommended.meaning_id]
-    return first + [meaning for meaning in meanings if meaning.id != recommended.meaning_id]
 
 
 class LookupService:
@@ -69,14 +62,14 @@ class LookupService:
         session: AsyncSession,
         repository: LexemeRepository,
         providers: LexiconProviders,
-        usage: UsageService,
-        languages: LanguageService,
+        collaborators: LookupCollaborators,
     ) -> None:
         self._session = session
         self._repository = repository
         self._providers = providers
-        self._usage = usage
-        self._languages = languages
+        self._usage = collaborators.usage
+        self._languages = collaborators.languages
+        self._saved = collaborators.saved
 
     async def lookup(self, user_id: UUID, request: ManualLookup) -> LookupResponse:
         english = await self._languages.get_language_by_code("en")
@@ -94,6 +87,7 @@ class LookupService:
             if provider is not None:
                 lexeme = await sources.from_ai(provider, target)
         response = await self._respond(lexeme, target, ai, russian, typo)
+        response = await self._with_saved(user_id, response)
         await self._session.commit()
         return response
 
@@ -228,6 +222,10 @@ class LookupService:
             typo_suggestion=None,
             ai_limited=ai.limit_exceeded,
         )
+
+    async def _with_saved(self, user_id: UUID, response: LookupResponse) -> LookupResponse:
+        saved = await self._saved.saved_meaning_ids(user_id, [m.id for m in response.meanings])
+        return response.model_copy(update={"user_meaning_ids": sorted(saved)})
 
     async def _translate_missing(
         self, ai: AiAccess, lexeme: Lexeme, shown: Sequence[Meaning], russian: Language

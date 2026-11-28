@@ -17,3 +17,11 @@ class AiTemporarilyUnavailableError(AppError):
 
     def __init__(self) -> None:
         super().__init__("AI is temporarily unavailable")
+
+
+class MeaningNotFoundError(AppError):
+    code = "meaning_not_found"
+    status_code = status.HTTP_404_NOT_FOUND
+
+    def __init__(self, meaning_id: int) -> None:
+        super().__init__("Meaning not found", {"meaning_id": meaning_id})
