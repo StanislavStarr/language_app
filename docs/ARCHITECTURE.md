@@ -283,8 +283,17 @@ kaikki.org raw Wiktextract JSONL (.gz) ──► scripts/import_lexicon.py
     meanings[0:3], has_more, user_meaning_ids (уже в словаре), typo_suggestion?
 ```
 
-AI-шаги 7–9 учитываются в суточном лимите `ai_lookup`. При исчерпании лимита lookup работает без
-AI: только словарные значения, без рекомендации.
+AI-шаги 7–9 одного запроса учитываются одной единицей суточного лимита `ai_lookup`, которая
+списывается при первом AI-шаге (списание коммитится отдельно, ADR-013). При исчерпании лимита lookup
+работает без AI: только словарные значения, без рекомендации, в ответе `ai_limited: true`.
+Ошибки AI не ломают lookup (деградация без AI; невалидный ответ повторяется один раз). Слово,
+не найденное нигде, возвращается как `lexeme: null` с пустым списком значений (HTTP 200).
+`user_meaning_ids` пуст до T2.8.
+
+Дополнительные эндпоинты: `GET /lexemes/{id}/meanings?offset=&limit=` (страница значений, `has_more`)
+и `POST /lexemes/{id}/ai-meanings {context_sentence?}` — ещё значения от AI (одна единица `ai_lookup`;
+429 при исчерпании лимита, 503 `ai_temporarily_unavailable`, 404 `lexeme_not_found`). Конкурентные
+вызовы сериализуются `pg_advisory_xact_lock(lexeme_id)`.
 
 ### 6.3. Сохранение слова и подготовка карточки
 

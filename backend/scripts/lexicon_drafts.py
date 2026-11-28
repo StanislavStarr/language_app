@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from app.integrations.nlp.normalization import normalize_text
 from app.modules.lexicon.enums import LexemeType, PartOfSpeech
+from app.modules.lexicon.part_of_speech import to_part_of_speech
 
 from scripts.lexicon_collector import DraftCollector
 from scripts.wiktextract import (
@@ -23,12 +24,6 @@ from scripts.wiktextract import (
 LETTER = re.compile(r"[a-z]")
 MAX_TRANSLATIONS_PER_MEANING = 5
 EXTERNAL_ID_LENGTH = 16
-POS_ALIASES = {
-    "article": PartOfSpeech.DETERMINER,
-    "proverb": PartOfSpeech.PHRASE,
-    "prep_phrase": PartOfSpeech.PHRASE,
-    "adv_phrase": PartOfSpeech.PHRASE,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,15 +59,6 @@ class MeaningBuild:
     gloss: str
     external_id: str
     translations: list[str] = field(default_factory=list)
-
-
-def to_part_of_speech(pos: str) -> PartOfSpeech:
-    if pos in POS_ALIASES:
-        return POS_ALIASES[pos]
-    try:
-        return PartOfSpeech(pos)
-    except ValueError:
-        return PartOfSpeech.OTHER
 
 
 def external_id(part_of_speech: PartOfSpeech, gloss: str) -> str:

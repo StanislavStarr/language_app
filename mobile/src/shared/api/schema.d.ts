@@ -38,6 +38,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/lexemes/lookup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Lookup */
+    post: operations['lookup_api_v1_lexemes_lookup_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/lexemes/{lexeme_id}/ai-meanings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Generate Ai Meanings */
+    post: operations['generate_ai_meanings_api_v1_lexemes__lexeme_id__ai_meanings_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/lexemes/{lexeme_id}/meanings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Meanings */
+    get: operations['list_meanings_api_v1_lexemes__lexeme_id__meanings_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/users/me': {
     parameters: {
       query?: never;
@@ -94,6 +145,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AiMeaningsRequest */
+    AiMeaningsRequest: {
+      /** Context Sentence */
+      context_sentence?: string | null;
+    };
     /**
      * AnswerLanguage
      * @enum {string}
@@ -145,6 +201,90 @@ export interface components {
       id: number;
       /** Name */
       name: string;
+    };
+    /** LexemeResponse */
+    LexemeResponse: {
+      /** Audio Url */
+      audio_url: string | null;
+      /** Id */
+      id: number;
+      /** Ipa */
+      ipa: string | null;
+      /** Lemma */
+      lemma: string;
+      /** Text */
+      text: string;
+    };
+    /** LookupResponse */
+    LookupResponse: {
+      /** Ai Limited */
+      ai_limited: boolean;
+      /** Has More */
+      has_more: boolean;
+      lexeme: components['schemas']['LexemeResponse'] | null;
+      /** Meanings */
+      meanings: components['schemas']['MeaningResponse'][];
+      recommended: components['schemas']['RecommendedMeaning'] | null;
+      /** Typo Suggestion */
+      typo_suggestion: string | null;
+      /** User Meaning Ids */
+      user_meaning_ids: number[];
+    };
+    /** ManualLookup */
+    ManualLookup: {
+      /** Context Sentence */
+      context_sentence?: string | null;
+      /**
+       * Source
+       * @constant
+       */
+      source: 'manual';
+      /** Text */
+      text: string;
+    };
+    /** MeaningResponse */
+    MeaningResponse: {
+      /** Gloss */
+      gloss: string;
+      /** Id */
+      id: number;
+      part_of_speech: components['schemas']['PartOfSpeech'];
+      /** Translations */
+      translations: string[];
+    };
+    /** MeaningsPage */
+    MeaningsPage: {
+      /** Has More */
+      has_more: boolean;
+      /** Meanings */
+      meanings: components['schemas']['MeaningResponse'][];
+    };
+    /**
+     * PartOfSpeech
+     * @enum {string}
+     */
+    PartOfSpeech:
+      | 'noun'
+      | 'verb'
+      | 'adj'
+      | 'adv'
+      | 'pron'
+      | 'prep'
+      | 'conj'
+      | 'det'
+      | 'intj'
+      | 'num'
+      | 'particle'
+      | 'phrase'
+      | 'other';
+    /** RecommendedMeaning */
+    RecommendedMeaning: {
+      /** Confidence */
+      confidence: number;
+      /** Contextual Translation */
+      contextual_translation: string | null;
+      /** Meaning Id */
+      meaning_id: number;
     };
     /** TokenResponse */
     TokenResponse: {
@@ -248,6 +388,189 @@ export interface operations {
       };
       /** @description Unprocessable Content */
       422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  lookup_api_v1_lexemes_lookup_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ManualLookup'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LookupResponse'];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  generate_ai_meanings_api_v1_lexemes__lexeme_id__ai_meanings_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lexeme_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AiMeaningsRequest'];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeaningsPage'];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+    };
+  };
+  list_meanings_api_v1_lexemes__lexeme_id__meanings_get: {
+    parameters: {
+      query?: {
+        offset?: number;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        lexeme_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeaningsPage'];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Unprocessable Content */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown;
         };

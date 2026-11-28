@@ -2,13 +2,13 @@ import json
 
 import pytest
 from app.modules.lexicon.enums import LexemeType, PartOfSpeech
+from app.modules.lexicon.part_of_speech import to_part_of_speech
 from scripts.lexicon_collector import DraftCollector, collect_lexemes
 from scripts.lexicon_drafts import (
     MAX_TRANSLATIONS_PER_MEANING,
     LexemeDraft,
     build_drafts,
     external_id,
-    to_part_of_speech,
 )
 from scripts.wiktextract import build_ranks
 

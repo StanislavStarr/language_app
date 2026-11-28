@@ -87,7 +87,7 @@ enum'ы для `type`, `source`, `part_of_speech`, `cefr_level`, статусо�
 
 > Итог: `integrations/ai/`: `AIProvider` (Protocol), `AIResult` с usage, ошибки `AIUnavailableError`/`AIProviderError`/`AIInvalidOutputError`, четыре пары «промпт (версия `-v1`) + схема ответа + доменная проверка», `OpenAIProvider` на `responses.parse` (таймаут 30 с, 2 повтора SDK, `store=false`, лог без текста), `FakeAIProvider`, `scripts/ai_smoke.py`. Ограничения длины и диапазонов вынесены из Pydantic-схем (их видит модель в строгом режиме structured outputs, возможности которого не гарантированы) в функции `check_*`; схемы содержат только базовые ключевые слова (закреплено тестом). Пользовательский текст в промптах экранируется и обрезается. Особенности: SDK `openai` 3.x использует свой HTTP-слой `httpx2`, поэтому тесты клиента идут через `httpx2.MockTransport`, а не `respx`; модель одна на все функции (`OPENAI_MODEL`, без переопределений по функциям). Smoke-прогон на `gpt-4o-mini` (2026-11-28): 7 из 7 проверок, схемы принимает строгий режим structured outputs; `bank` в финансовом контексте → «банк» (confidence 0,98), в речном → «берег» (0,95); выдуманное слово → `found=false`; расход 2 297 входных и 253 выходных токена. Замечание по качеству для evals (T2.10): перевод значения «tilt» получил «выкручивать». Для T2.7: сервис сам считает лимит `ai_lookup`, кэширует результаты по `PROMPT_VERSION`, один раз повторяет вызов при `AIInvalidOutputError` и деградирует без AI; `AIProvider` подключается зависимостью (`dependencies.py` появится с первым потребителем).
 
-### T2.7 — Lookup                                                ~4 ч   [ ]
+### T2.7 — Lookup                                                ~4 ч   [x]
 
 **Контекст:** ARCHITECTURE.md §6.2; PRODUCT.md §6.4.
 **Сделать:** `LookupService` и эндпоинты `POST /lexemes/lookup` (вариант `manual`; схема —
@@ -96,6 +96,7 @@ discriminated union, вариант `book` добавляется в T3.5), `GET
 списание `ai_lookup`; при исчерпании лимита — ответ без AI-шагов и флаг `ai_limited: true`.
 **Тесты:** каждая ветка пайплайна с fake-провайдерами: найдено в БД, найдено по форме, Free
 Dictionary, AI fallback, опечатка, кэш выбора значения (второй вызов не идёт в AI), лимит.
+> Итог: `LookupService` и эндпоинты `POST /lexemes/lookup` (manual), `GET /lexemes/{id}/meanings`, `POST /lexemes/{id}/ai-meanings`; конвейер БД → формы → Free Dictionary → typo → AI-fallback, выбор значения с кэшем `sense_selection`, перевод недостающих значений, одна единица `ai_lookup` на запрос (`ai_limited` при исчерпании). Общий маппинг частей речи вынесен в `part_of_speech.py`. Отклонения: `user_meaning_ids` пуст до T2.8; списание лимита происходит до AI-вызова и не возвращается при сбое AI (принято). Долг: слова, введённые пользователем, попадают в общий `lexeme` только после того, как AI их опознал (`found=true`) — фильтр по уверенности в backlog.
 
 ### T2.8 — Словарь и темы                                        ~4 ч   [ ]
 

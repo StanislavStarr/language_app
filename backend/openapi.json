@@ -1,6 +1,25 @@
 {
   "components": {
     "schemas": {
+      "AiMeaningsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context_sentence": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Sentence"
+          }
+        },
+        "title": "AiMeaningsRequest",
+        "type": "object"
+      },
       "AnswerLanguage": {
         "enum": [
           "en_simple",
@@ -120,6 +139,255 @@
           "name"
         ],
         "title": "LanguageResponse",
+        "type": "object"
+      },
+      "LexemeResponse": {
+        "properties": {
+          "audio_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Url"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "ipa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipa"
+          },
+          "lemma": {
+            "title": "Lemma",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "lemma",
+          "ipa",
+          "audio_url"
+        ],
+        "title": "LexemeResponse",
+        "type": "object"
+      },
+      "LookupResponse": {
+        "properties": {
+          "ai_limited": {
+            "title": "Ai Limited",
+            "type": "boolean"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "lexeme": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LexemeResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meanings": {
+            "items": {
+              "$ref": "#/components/schemas/MeaningResponse"
+            },
+            "title": "Meanings",
+            "type": "array"
+          },
+          "recommended": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecommendedMeaning"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "typo_suggestion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Typo Suggestion"
+          },
+          "user_meaning_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "User Meaning Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lexeme",
+          "recommended",
+          "meanings",
+          "has_more",
+          "user_meaning_ids",
+          "typo_suggestion",
+          "ai_limited"
+        ],
+        "title": "LookupResponse",
+        "type": "object"
+      },
+      "ManualLookup": {
+        "additionalProperties": false,
+        "properties": {
+          "context_sentence": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Sentence"
+          },
+          "source": {
+            "const": "manual",
+            "title": "Source",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "text"
+        ],
+        "title": "ManualLookup",
+        "type": "object"
+      },
+      "MeaningResponse": {
+        "properties": {
+          "gloss": {
+            "title": "Gloss",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "part_of_speech": {
+            "$ref": "#/components/schemas/PartOfSpeech"
+          },
+          "translations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Translations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "part_of_speech",
+          "gloss",
+          "translations"
+        ],
+        "title": "MeaningResponse",
+        "type": "object"
+      },
+      "MeaningsPage": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "meanings": {
+            "items": {
+              "$ref": "#/components/schemas/MeaningResponse"
+            },
+            "title": "Meanings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "meanings",
+          "has_more"
+        ],
+        "title": "MeaningsPage",
+        "type": "object"
+      },
+      "PartOfSpeech": {
+        "enum": [
+          "noun",
+          "verb",
+          "adj",
+          "adv",
+          "pron",
+          "prep",
+          "conj",
+          "det",
+          "intj",
+          "num",
+          "particle",
+          "phrase",
+          "other"
+        ],
+        "title": "PartOfSpeech",
+        "type": "string"
+      },
+      "RecommendedMeaning": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "contextual_translation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contextual Translation"
+          },
+          "meaning_id": {
+            "title": "Meaning Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "meaning_id",
+          "contextual_translation",
+          "confidence"
+        ],
+        "title": "RecommendedMeaning",
         "type": "object"
       },
       "TokenResponse": {
@@ -309,6 +577,269 @@
         "summary": "List Languages",
         "tags": [
           "languages"
+        ]
+      }
+    },
+    "/api/v1/lexemes/lookup": {
+      "post": {
+        "operationId": "lookup_api_v1_lexemes_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualLookup"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Lookup",
+        "tags": [
+          "lexemes"
+        ]
+      }
+    },
+    "/api/v1/lexemes/{lexeme_id}/ai-meanings": {
+      "post": {
+        "operationId": "generate_ai_meanings_api_v1_lexemes__lexeme_id__ai_meanings_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lexeme_id",
+            "required": true,
+            "schema": {
+              "title": "Lexeme Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiMeaningsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeaningsPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Generate Ai Meanings",
+        "tags": [
+          "lexemes"
+        ]
+      }
+    },
+    "/api/v1/lexemes/{lexeme_id}/meanings": {
+      "get": {
+        "operationId": "list_meanings_api_v1_lexemes__lexeme_id__meanings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lexeme_id",
+            "required": true,
+            "schema": {
+              "title": "Lexeme Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 20,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeaningsPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Meanings",
+        "tags": [
+          "lexemes"
         ]
       }
     },

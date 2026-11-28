@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import timedelta
 
+import httpx
 from fastapi import FastAPI
 
 from app.api import api_router
@@ -12,6 +13,7 @@ from app.core.errors import ErrorResponse, register_error_handlers
 from app.core.jobs import jobs_app, run_jobs
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.rate_limit import SlidingWindowRateLimiter
+from app.modules.lexicon.providers import build_lexicon_providers
 
 
 @asynccontextmanager
@@ -20,7 +22,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     engine = create_engine(settings.database_url)
     app.state.session_factory = create_session_factory(engine)
     try:
-        async with run_jobs(jobs_app, settings):
+        async with httpx.AsyncClient() as http_client, run_jobs(jobs_app, settings):
+            app.state.lexicon_providers = build_lexicon_providers(settings, http_client)
             yield
     finally:
         await engine.dispose()
