@@ -25,7 +25,7 @@
 
 > Итог: скрипт `explore_wiktextract.py` (потоково читает `.jsonl` и `.jsonl.gz`, 2 минуты на «сырой» дамп) и отчёт `docs/spikes/lexicon-coverage.md`. Главная находка: общий дамп kaikki (3,4 ГБ) теряет большую часть русских переводов, поэтому источником импорта выбран «сырой» дамп `raw-wiktextract-data.jsonl.gz` (3 ГБ). Рекомендация: N = 60 000 (≈ 50 МБ), фразы с словами из топ-30k (≈ 28 тысяч, ≈ 11 МБ), перевод есть у ≈ 56% лемм, остальное переводит AI. ARCHITECTURE §6.1 обновлён; `wordfreq` добавлен в dev-зависимости.
 
-### T2.2 — Модели лексикона                                      ~3 ч   [ ]
+### T2.2 — Модели лексикона                                      ~3 ч   [x]
 
 **Контекст:** ARCHITECTURE.md §5.2; skill `backend-migration`.
 **Сделать:** модели `lexeme`, `lexeme_form`, `meaning`, `translation`, `meaning_content`,
@@ -33,6 +33,8 @@
 enum'ы для `type`, `source`, `part_of_speech`, `cefr_level`, статусов; репозитории модуля `lexicon`:
 поиск лексемы по кандидатам, значения с переводами (без N+1), похожие лексемы по trgm.
 **Тесты:** репозитории на реальной БД: поиск по форме, порядок значений, trgm-подсказка.
+
+> Итог: модуль `lexicon` — модели 7 таблиц (§5.2), миграция `0005` (GIN trigram на `lexeme.normalized_text`, индексы форм, значений и `sense_selection.selected_meaning_id`), перечисления, `LexemeRepository` (`find_by_candidates` с приоритетом кандидатов, `list_meanings` с переводами без N+1, `find_similar` по `pg_trgm`), 30 тестов на реальной БД. Отличия: `CefrLevel` перенесён в `languages`; добавлен общий помощник `string_enum` (используется в users, auth, usage, lexicon); `Lexeme.forms/meanings` не созданы (нет потребителя). Известное ограничение: порог trigram 0,45 пропускает перестановки в коротких словах — в `docs/backlog.md` для задачи lookup. `find_by_candidates` может вернуть одну лексему дважды (по тексту и по форме), сервис должен убрать дубли.
 
 ### T2.3 — Импорт лексикона                                      ~4 ч   [ ]
 

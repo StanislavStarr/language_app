@@ -177,6 +177,10 @@ jobs (Procrastinate) → service
 | `sense_selection` | `id`, `lexeme_id`, `context_hash`, `selected_meaning_id?`, `contextual_translation?`, `confidence`, `model`, `prompt_version` | unique (`lexeme_id`, `context_hash`, `prompt_version`) |
 | `irregular_verb` | `id`, `base_lexeme_id`, `past_simple`, `past_participle`, `*_audio_url?`, `translation` | unique `base_lexeme_id` |
 
+Значения перечислений (varchar + CHECK): `part_of_speech` — `noun`, `verb`, `adj`, `adv`, `pron`, `prep`,
+`conj`, `det`, `intj`, `num`, `particle`, `phrase`, `other`; `meaning_content.status` — `pending`, `ready`,
+`failed`; `confidence` — число от 0 до 1. Уровни CEFR (`CefrLevel`) лежат в модуле `languages`.
+
 `sense_selection` хранит только **хэш** предложения, но не сам текст: кэш общий, а текст книги личный.
 
 ### 5.3. Словарь пользователя
@@ -273,7 +277,7 @@ job enrich_vocabulary_item:
   1. статус enriching
   2. перевод значения на русский есть? нет → AI-перевод
   3. meaning_content для (meaning, cefr пользователя, текущая версия промпта):
-       INSERT … ON CONFLICT DO NOTHING (status = generating)
+       INSERT … ON CONFLICT DO NOTHING (status = pending)
        pg_advisory_xact_lock(meaning_id, cefr) → кто первый, тот генерирует; остальные ждут/переиспользуют
   4. валидация (определение без целевого слова, пример содержит слово, длины)
   5. статус: всё есть → ready; чего-то нет → partial; критичная ошибка → failed

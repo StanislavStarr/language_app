@@ -3,7 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from app.modules.users.enums import AnswerLanguage, CefrLevel
+from app.modules.languages.enums import CefrLevel
+from app.modules.users.enums import AnswerLanguage
 
 
 class UserUpdate(BaseModel):

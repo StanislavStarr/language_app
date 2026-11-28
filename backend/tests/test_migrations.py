@@ -37,6 +37,16 @@ def test_upgrade_seeds_languages_and_downgrade_removes_schema(scratch_database_u
         scratch_database_url, "SELECT to_regclass('\"user\"'), to_regclass('auth_identity')"
     )
     usage_table = fetch_all(scratch_database_url, "SELECT to_regclass('daily_usage')")
+    lexicon_tables = fetch_all(
+        scratch_database_url,
+        "SELECT count(*) FROM pg_tables WHERE tablename IN "
+        "('lexeme', 'lexeme_form', 'meaning', 'translation', 'meaning_content', "
+        "'sense_selection', 'irregular_verb')",
+    )
+    trigram_index = fetch_all(
+        scratch_database_url,
+        "SELECT indexdef FROM pg_indexes WHERE indexname = 'ix_lexeme_normalized_text_trgm'",
+    )
     seeded = fetch_all(scratch_database_url, "SELECT code FROM language ORDER BY id")
     extensions = fetch_all(scratch_database_url, "SELECT extname FROM pg_extension")
     command.downgrade(config, "base")
@@ -51,8 +61,16 @@ def test_upgrade_seeds_languages_and_downgrade_removes_schema(scratch_database_u
     usage_table_after_downgrade = fetch_all(
         scratch_database_url, "SELECT to_regclass('daily_usage')"
     )
+    lexicon_tables_after_downgrade = fetch_all(
+        scratch_database_url,
+        "SELECT count(*) FROM pg_tables WHERE tablename IN ('lexeme', 'meaning', 'translation')",
+    )
     command.upgrade(config, "head")
 
+    assert lexicon_tables == [(7,)]
+    assert lexicon_tables_after_downgrade == [(0,)]
+    assert len(trigram_index) == 1
+    assert "gin_trgm_ops" in str(trigram_index[0][0])
     assert usage_table == [("daily_usage",)]
     assert usage_table_after_downgrade == [(None,)]
     assert user_tables == [('"user"', "auth_identity")]

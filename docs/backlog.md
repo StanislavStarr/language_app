@@ -18,3 +18,4 @@
 - «Удалить аккаунт» в профиле (PRODUCT §6.2, §6.11): нужен `DELETE /users/me` на backend (каскадное удаление) и подтверждение на клиенте.
 - Автотест навигатора с `Stack.Protected` (`expo-router/testing-library`): переход онбординг → вкладки после `complete_onboarding`.
 - Общие тестовые хелперы mobile (`jsonResponse`, `renderWithProviders`, `USER`): дублируются в нескольких тестах страниц и шлюзов.
+- Порог `pg_trgm` 0,45 для подсказок об опечатках не ловит перестановки в коротких словах (`houze` → `house` 0,33, `recieve` → `receive` 0,33, `wotter` → `water` 0,30), но ловит `beautifull` (0,75) и `hous` (0,57). При реализации lookup оценить порог ≈ 0,3 с ранжированием по частоте или расстояние Левенштейна (`fuzzystrmatch`).

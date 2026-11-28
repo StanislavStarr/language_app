@@ -1,9 +1,10 @@
 from collections.abc import AsyncIterator
 from datetime import datetime
+from enum import StrEnum
 from typing import Annotated, ClassVar
 
 from fastapi import Depends, Request
-from sqlalchemy import DateTime, MetaData
+from sqlalchemy import DateTime, Enum, MetaData
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -24,6 +25,17 @@ NAMING_CONVENTION = {
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
     type_annotation_map: ClassVar[dict[type, DateTime]] = {datetime: DateTime(timezone=True)}
+
+
+def string_enum[Member: StrEnum](enum_class: type[Member], name: str, length: int) -> Enum:
+    return Enum(
+        enum_class,
+        name=name,
+        native_enum=False,
+        length=length,
+        create_constraint=True,
+        values_callable=lambda members: [member.value for member in members],
+    )
 
 
 def create_engine(database_url: str) -> AsyncEngine:

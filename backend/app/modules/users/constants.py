@@ -1,4 +1,5 @@
-from app.modules.users.enums import AnswerLanguage, CefrLevel
+from app.modules.languages.enums import CefrLevel
+from app.modules.users.enums import AnswerLanguage
 
 NATIVE_LANGUAGE_CODE = "ru"
 LEARNING_LANGUAGE_CODE = "en"

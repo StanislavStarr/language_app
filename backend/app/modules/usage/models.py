@@ -1,10 +1,10 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey
+from sqlalchemy import CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.database import Base
+from app.core.database import Base, string_enum
 from app.modules.usage.enums import UsageKind
 
 
@@ -17,14 +17,6 @@ class DailyUsage(Base):
     )
     day: Mapped[date] = mapped_column(primary_key=True)
     kind: Mapped[UsageKind] = mapped_column(
-        Enum(
-            UsageKind,
-            name="usage_kind",
-            native_enum=False,
-            length=16,
-            create_constraint=True,
-            values_callable=lambda members: [member.value for member in members],
-        ),
-        primary_key=True,
+        string_enum(UsageKind, "usage_kind", 16), primary_key=True
     )
     count: Mapped[int]
